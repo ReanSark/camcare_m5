@@ -1,7 +1,7 @@
 
 "use client";
 
-import { account, databases } from "@/lib/appwrite.config";
+import { account, databases } from "@/lib/appwrite.client";
 import { Query } from "appwrite";
 
 export const loginUser = async (email: string, password: string) => {
