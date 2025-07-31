@@ -2,28 +2,50 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginUser } from "@/utils/loginUser";
+import { account, databases } from "@/lib/appwrite.client";
+import { Query } from "appwrite";
+import { redirectByRole } from "@/utils/redirectByRole";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const { role } = await loginUser(email, password);
+    setLoading(true);
+    setError("");
 
-      if (role === "Admin") router.push("/dashboard/admin");
-      else if (role === "Doctor") router.push("/dashboard/doctor");
-      else if (role === "Nurse") router.push("/dashboard/nurse");
-      else if (role === "Receptionist") router.push("/dashboard/receptionist");
-      else if (role === "Pharmacist") router.push("/dashboard/pharmacist");
-      else if (role === "Inventory") router.push("/dashboard/inventory");
-      else setError("Role not assigned.");
-    } catch (err) {
-      setError("Login failed. Please check your credentials.");
+    try {
+      // Create session with Appwrite
+      await account.createEmailPasswordSession(email, password);
+
+      // Get user info
+      const user = await account.get();
+
+      // Fetch role from UserRoles collection
+      const roleDocs = await databases.listDocuments("camcare_db", "UserRoles", [
+        Query.equal("userId", user.$id),
+      ]);
+
+      const role = roleDocs.documents[0]?.role;
+
+      if (role) {
+        redirectByRole(role, router);
+      } else {
+        setError("No role assigned to this user.");
+      }
+    } catch (err: unknown) {
+      console.error("Login error:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Login failed. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,9 +77,12 @@ export default function LoginPage() {
           {error && <p className="text-sm text-red-500">{error}</p>}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white font-semibold py-2 rounded-md hover:bg-blue-700 transition"
+            disabled={loading}
+            className={`w-full ${
+              loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+            } text-white font-semibold py-2 rounded-md transition`}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
       </div>
