@@ -1,3 +1,15 @@
+"use client";
+
+import RoleGuard from "@/components/RoleGuard";
+
 export default function AdminDashboard() {
-  return <h1 className="text-2xl font-bold">Admin Dashboard</h1>;
+  return (
+    <RoleGuard allowedRole="Admin">
+      <div>
+        <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
+        <p className="text-gray-700">Welcome, Admin! Here is your overview.</p>
+      </div>
+    </RoleGuard>
+  );
 }
+
