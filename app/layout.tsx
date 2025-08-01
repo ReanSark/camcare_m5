@@ -1,5 +1,6 @@
 // app/layout.tsx
 import "./globals.css";
+import { Toaster } from 'sonner'
 import { AuthProvider } from "@/context/AuthContext";
 import type { Metadata } from "next";
 
@@ -12,7 +13,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <Toaster richColors />
+          {children}
+          </AuthProvider>
       </body>
     </html>
   );

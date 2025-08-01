@@ -1,40 +1,36 @@
-
 "use client";
 
 import { account, databases } from "@/lib/appwrite.client";
 import { Query } from "appwrite";
+import { toast } from "sonner";
 
-export const loginUser = async (email: string, password: string) => {
+export async function loginUser(email: string, password: string) {
+  try {
+    // Start session
+    await account.createEmailPasswordSession(email, password);
 
-  /* Try this later for the failed login issue*/
-  // try {
-  // await account.createEmailPasswordSession(email, password);
-  // const user = await account.get();
+    // Get user info
+    const user = await account.get();
 
-  // console.log("User:", user);
+    // Get role from DB
+    const roleDocs = await databases.listDocuments("camcare_db", "UserRoles", [
+      Query.equal("userId", user.$id),
+    ]);
 
-  // const roleDocs = await databases.listDocuments("camcare_db", "UserRoles", [
-  //   Query.equal("userId", user.$id),
-  // ]);
+    const role = roleDocs.documents?.[0]?.role;
 
-  // const role = roleDocs.documents[0]?.role;
-  // console.log("Role:", role);
+    if (!role) throw new Error("No role assigned to this user.");
 
-  // // redirect logic...
-  // } catch (err: any) {
-  //   console.error("Full login error object:", err);
-  //   alert(err.message || "Login failed.");
-  // }
+    // Cache role locally
+    localStorage.setItem("userRole", role);
+    localStorage.setItem("userId", user.$id);
 
-  
-  await account.createEmailPasswordSession(email, password);
-  const user = await account.get();
+    // Optional toast
+    toast.success(`Welcome ${role}!`);
 
-  const roleDocs = await databases.listDocuments("camcare_db", "UserRoles", [
-    Query.equal("userId", user.$id)
-  ]);
-
-  const role = roleDocs.documents[0]?.role;
-
-  return { user, role };
-};
+    return { role, user };
+  } catch (err) {
+    toast.error("Login failed.");
+    throw err;
+  }
+}

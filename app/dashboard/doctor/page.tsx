@@ -1,3 +1,10 @@
-export default function AdminDashboard() {
-  return <h1 className="text-2xl font-bold">Doctor Dashboard</h1>;
+import RoleGuard from "@/components/RoleGuard";
+
+export default function AdminDoctorPage() {
+  return (
+    <RoleGuard allowedRoles={["Admin", "Doctor"]}>
+      <div>Doctor Dashboard</div>
+      <div>Visible to Admins and Doctors only.</div>
+    </RoleGuard>
+  );
 }

@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 type RoleGuardProps = {
-  allowedRole: string;
+  allowedRoles: string[];
   children: React.ReactNode;
 };
 
-export default function RoleGuard({ allowedRole, children }: RoleGuardProps) {
+export default function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
   const { user, role, loading } = useAuth();
   const router = useRouter();
 
@@ -17,13 +17,15 @@ export default function RoleGuard({ allowedRole, children }: RoleGuardProps) {
     if (!loading) {
       if (!user) {
         router.push("/auth/login");
-      } else if (role !== allowedRole) {
+      } else if (!role || !allowedRoles.includes(role)) {
         router.push("/403");
       }
     }
-  }, [user, role, loading, router, allowedRole]);
+  }, [user, role, loading, router, allowedRoles]);
 
-  if (loading || !user || role !== allowedRole) {
+  const isAuthorized = !!user && !!role && allowedRoles.includes(role);
+
+  if (loading || !isAuthorized) {
     return (
       <div className="flex justify-center items-center h-screen text-gray-600">
         Checking permissions...

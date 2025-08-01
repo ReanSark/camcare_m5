@@ -1,6 +1,7 @@
 "use client";
 
-import { loginUser } from "@/utils/loginUser"; // Add this at the top
+import { loginUser } from "@/utils/loginUser";
+import { toast } from "sonner"; // Add this at the top
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { redirectByRole } from "@/utils/redirectByRole";
@@ -19,7 +20,7 @@ export default function LoginPage() {
 
   try {
     const { role } = await loginUser(email, password);
-    redirectByRole(role, router);
+    redirectByRole(role, router); // Uses role already cached
   } catch (err: unknown) {
     console.error("Login error:", err);
     if (err instanceof Error) {
