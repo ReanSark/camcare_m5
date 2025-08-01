@@ -1,4 +1,6 @@
 // app/dashboard/layout.tsx
+"use client";
+
 import React from "react";
 import { Protected } from '@/components/Protected';
 import { useAuth } from "@/context/AuthContext";
