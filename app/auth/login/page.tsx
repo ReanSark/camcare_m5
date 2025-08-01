@@ -1,9 +1,8 @@
 "use client";
 
+import { loginUser } from "@/utils/loginUser"; // Add this at the top
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { account, databases } from "@/lib/appwrite.client";
-import { Query } from "appwrite";
 import { redirectByRole } from "@/utils/redirectByRole";
 
 export default function LoginPage() {
@@ -14,40 +13,24 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      // Create session with Appwrite
-      await account.createEmailPasswordSession(email, password);
-
-      // Get user info
-      const user = await account.get();
-
-      // Fetch role from UserRoles collection
-      const roleDocs = await databases.listDocuments("camcare_db", "UserRoles", [
-        Query.equal("userId", user.$id),
-      ]);
-
-      const role = roleDocs.documents[0]?.role;
-
-      if (role) {
-        redirectByRole(role, router);
-      } else {
-        setError("No role assigned to this user.");
-      }
-    } catch (err: unknown) {
-      console.error("Login error:", err);
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Login failed. Please try again.");
-      }
-    } finally {
-      setLoading(false);
+  try {
+    const { role } = await loginUser(email, password);
+    redirectByRole(role, router);
+  } catch (err: unknown) {
+    console.error("Login error:", err);
+    if (err instanceof Error) {
+      setError(err.message);
+    } else {
+      setError("Login failed. Please try again.");
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
