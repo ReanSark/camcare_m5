@@ -24,6 +24,8 @@ export default function LoginPage() {
         }
       } catch {
         // Not logged in
+        // ❗ Silently fail, it's just a missing session
+      console.info("No active session. User can log in.");
       }
     };
     checkSession();

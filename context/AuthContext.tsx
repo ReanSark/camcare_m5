@@ -32,13 +32,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const checkSession = async () => {
       try {
         const user = await account.get(); // Try to fetch current session
-        const cachedRole = localStorage.getItem("userRole");
+        const cachedRole = 
+          typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
 
         setUser(user);
         setRole(cachedRole ?? null); // Fallback if role not yet cached
       } catch (err) {
+        console.warn("🔐 No active session:", err);
         setUser(null);
         setRole(null); // No session found
+        localStorage.removeItem("userRole"); // 🚿 clear stale cache
       } finally {
         setLoading(false); // ✅ Mark loading complete in all cases
       }
