@@ -2,7 +2,10 @@ import { useRouter } from "next/navigation";
 
 type Router = ReturnType<typeof useRouter>;
 
-export function redirectByRole(role: string, router: Router) {
+/**
+ * Returns the dashboard route path for a given role.
+ */
+export function getDashboardPath(role: string): string {
   const dashboardMap: Record<string, string> = {
     Admin: "/dashboard/admin",
     Doctor: "/dashboard/doctor",
@@ -13,12 +16,13 @@ export function redirectByRole(role: string, router: Router) {
     LabTechnician: "/dashboard/labtechnician",
   };
 
-  const route = dashboardMap[role];
-
-  if (route) {
-    router.push(route);
-  } else {
-    router.push("/auth/login"); // fallback or 403
-  }
+  return dashboardMap[role] || "/403"; // fallback
 }
 
+/**
+ * Redirects the user using the router to the dashboard path for their role.
+ */
+export function redirectByRole(role: string, router: Router) {
+  const path = getDashboardPath(role);
+  router.replace(path);
+}

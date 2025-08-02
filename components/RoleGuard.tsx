@@ -21,7 +21,7 @@ export default function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
       router.push("/auth/login");
     } else if (!role || !allowedRoles.includes(role)) {
       console.warn(`🚫 Unauthorized role "${role}" — redirecting to /403`);
-      router.push("/403");
+      router.replace("/403");
     }
   }, [user, role, loading, router, allowedRoles]);
 
@@ -36,8 +36,13 @@ export default function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
   }
 
   if (!isAuthorized) {
-    return null; // or return a fallback UI if needed
-  }
+  return (
+    <div className="flex justify-center items-center h-screen text-gray-600">
+      Checking authorization...
+    </div>
+  );
+}
+
 
   return <>{children}</>;
 }

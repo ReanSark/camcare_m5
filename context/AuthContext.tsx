@@ -1,5 +1,6 @@
 "use client";
 
+import { getUserRole } from "@/lib/roles";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useState, useEffect } from "react";
 import { account, databases } from "@/lib/appwrite.client";
@@ -32,16 +33,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const checkSession = async () => {
       try {
         const user = await account.get(); // Try to fetch current session
-        const cachedRole = 
-          typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+        const role = await getUserRole(user.$id); // ✅ this is the key part
+
+        if (!role) {
+        console.error("❌ User role not found. Forcing logout.");
+        await account.deleteSession("current");
+        setUser(null);
+        setRole(null);
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("userId");
+        window.location.href = "/auth/login";
+        return;
+        }
 
         setUser(user);
-        setRole(cachedRole ?? null); // Fallback if role not yet cached
+        setRole(role ?? null);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("userRole", role);
+          localStorage.setItem("userId", user.$id);
+        }
+        
+        // Fallback if role not yet cached
       } catch (err) {
         console.warn("🔐 No active session:", err);
         setUser(null);
         setRole(null); // No session found
-        localStorage.removeItem("userRole"); // 🚿 clear stale cache
+        localStorage.removeItem("userRole");// 🚿 clear stale cache
+        localStorage.removeItem("userId"); 
       } finally {
         setLoading(false); // ✅ Mark loading complete in all cases
       }
