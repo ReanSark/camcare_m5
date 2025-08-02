@@ -1,0 +1,1464 @@
+[
+  {
+    "name": "UserRoles",
+    "attributes": [
+      {
+        "key": "userId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "role",
+        "type": "enum",
+        "elements": [
+          "Receptionist",
+          "Doctor",
+          "Nurse",
+          "Pharmacist",
+          "Inventory",
+          "Admin",
+          "LabTechnician"
+        ],
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "Patients",
+    "attributes": [
+      {
+        "key": "fullName",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "gender",
+        "type": "enum",
+        "elements": [
+          "Male",
+          "Female",
+          "Other"
+        ],
+        "required": true
+      },
+      {
+        "key": "dob",
+        "type": "date",
+        "required": true
+      },
+      {
+        "key": "phone",
+        "type": "string"
+      },
+      {
+        "key": "email",
+        "type": "string"
+      },
+      {
+        "key": "address",
+        "type": "string"
+      },
+      {
+        "key": "bloodType",
+        "type": "string"
+      },
+      {
+        "key": "emergencyContact",
+        "type": "string"
+      },
+      {
+        "key": "medicalHistory",
+        "type": "text"
+      },
+      {
+        "key": "isReturning",
+        "type": "boolean"
+      },
+      {
+        "key": "visitHistory",
+        "type": "string[]"
+      },
+      {
+        "key": "referredByDoctorId",
+        "type": "string"
+      },
+      {
+        "key": "referredByHospitalName",
+        "type": "string"
+      },
+      {
+        "key": "referralCommissionAmount",
+        "type": "float"
+      },
+      {
+        "key": "hospitalCommissionAmount",
+        "type": "float"
+      },
+      {
+        "key": "referralNote",
+        "type": "string"
+      },
+      {
+        "key": "isArchived",
+        "type": "boolean"
+      },
+      {
+        "key": "createdBy",
+        "type": "string"
+      },
+      {
+        "key": "updatedBy",
+        "type": "string"
+      },
+      {
+        "key": "createdAt",
+        "type": "datetime"
+      },
+      {
+        "key": "updatedAt",
+        "type": "datetime"
+      }
+    ]
+  },
+  {
+    "name": "Appointments",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "doctorIds",
+        "type": "string[]"
+      },
+      {
+        "key": "nurseIds",
+        "type": "string[]"
+      },
+      {
+        "key": "date",
+        "type": "datetime"
+      },
+      {
+        "key": "reason",
+        "type": "text"
+      },
+      {
+        "key": "status",
+        "type": "enum",
+        "elements": [
+          "scheduled",
+          "completed",
+          "canceled"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Admissions",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "doctorIds",
+        "type": "string[]"
+      },
+      {
+        "key": "nurseIds",
+        "type": "string[]"
+      },
+      {
+        "key": "roomId",
+        "type": "string"
+      },
+      {
+        "key": "admissionDate",
+        "type": "datetime"
+      },
+      {
+        "key": "dischargeDate",
+        "type": "datetime"
+      },
+      {
+        "key": "notes",
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "name": "Rooms",
+    "attributes": [
+      {
+        "key": "roomNumber",
+        "type": "string"
+      },
+      {
+        "key": "type",
+        "type": "string"
+      },
+      {
+        "key": "status",
+        "type": "enum",
+        "elements": [
+          "available",
+          "occupied",
+          "maintenance"
+        ]
+      },
+      {
+        "key": "currentPatientId",
+        "type": "string"
+      },
+      {
+        "key": "usageHistory",
+        "type": "string[]"
+      }
+    ]
+  },
+  {
+    "name": "Diagnoses",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string"
+      },
+      {
+        "key": "doctorId",
+        "type": "string"
+      },
+      {
+        "key": "appointmentId",
+        "type": "string"
+      },
+      {
+        "key": "diagnosis",
+        "type": "text"
+      },
+      {
+        "key": "date",
+        "type": "datetime"
+      },
+      {
+        "key": "isArchived",
+        "type": "boolean"
+      },
+      {
+        "key": "createdBy",
+        "type": "string"
+      },
+      {
+        "key": "updatedBy",
+        "type": "string"
+      },
+      {
+        "key": "createdAt",
+        "type": "datetime"
+      },
+      {
+        "key": "updatedAt",
+        "type": "datetime"
+      }
+    ]
+  },
+  {
+    "name": "Prescriptions",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string"
+      },
+      {
+        "key": "doctorId",
+        "type": "string"
+      },
+      {
+        "key": "diagnosisId",
+        "type": "string"
+      },
+      {
+        "key": "medicines",
+        "type": "string[]"
+      },
+      {
+        "key": "dosageInstructions",
+        "type": "text"
+      },
+      {
+        "key": "issuedDate",
+        "type": "datetime"
+      },
+      {
+        "key": "isArchived",
+        "type": "boolean"
+      },
+      {
+        "key": "createdBy",
+        "type": "string"
+      },
+      {
+        "key": "updatedBy",
+        "type": "string"
+      },
+      {
+        "key": "createdAt",
+        "type": "datetime"
+      },
+      {
+        "key": "updatedAt",
+        "type": "datetime"
+      }
+    ]
+  },
+  {
+    "name": "GroupInvoices",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string"
+      },
+      {
+        "key": "admissionId",
+        "type": "string"
+      },
+      {
+        "key": "invoiceIds",
+        "type": "string[]"
+      },
+      {
+        "key": "total",
+        "type": "float"
+      },
+      {
+        "key": "status",
+        "type": "enum",
+        "elements": [
+          "paid",
+          "unpaid"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "LabResults",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string"
+      },
+      {
+        "key": "requestedBy",
+        "type": "string"
+      },
+      {
+        "key": "diagnosisId",
+        "type": "string"
+      },
+      {
+        "key": "testName",
+        "type": "string"
+      },
+      {
+        "key": "results",
+        "type": "text"
+      },
+      {
+        "key": "date",
+        "type": "datetime"
+      },
+      {
+        "key": "labSource",
+        "type": "enum",
+        "elements": [
+          "in-house",
+          "external"
+        ]
+      },
+      {
+        "key": "externalLabName",
+        "type": "string"
+      },
+      {
+        "key": "processedBy",
+        "type": "string"
+      },
+      {
+        "key": "status",
+        "type": "enum",
+        "elements": [
+          "pending",
+          "processing",
+          "completed",
+          "canceled"
+        ]
+      },
+      {
+        "key": "resultFileUrl",
+        "type": "string"
+      },
+      {
+        "key": "dateRequested",
+        "type": "datetime"
+      },
+      {
+        "key": "dateCompleted",
+        "type": "datetime"
+      },
+      {
+        "key": "printedAt",
+        "type": "datetime"
+      },
+      {
+        "key": "isPrinted",
+        "type": "boolean"
+      },
+      {
+        "key": "labConsentId",
+        "type": "string"
+      },
+      {
+        "key": "isArchived",
+        "type": "boolean"
+      },
+      {
+        "key": "createdBy",
+        "type": "string"
+      },
+      {
+        "key": "updatedBy",
+        "type": "string"
+      },
+      {
+        "key": "createdAt",
+        "type": "datetime"
+      },
+      {
+        "key": "updatedAt",
+        "type": "datetime"
+      }
+    ]
+  },
+  {
+    "name": "InventoryItems",
+    "attributes": [
+      {
+        "key": "name",
+        "type": "string"
+      },
+      {
+        "key": "category",
+        "type": "enum",
+        "elements": [
+          "medicine",
+          "equipment",
+          "supply"
+        ]
+      },
+      {
+        "key": "quantity",
+        "type": "integer"
+      },
+      {
+        "key": "reorderLevel",
+        "type": "integer"
+      },
+      {
+        "key": "lastUpdated",
+        "type": "datetime"
+      }
+    ]
+  },
+  {
+    "name": "FinanceList",
+    "attributes": [
+      {
+        "key": "type",
+        "type": "enum",
+        "elements": [
+          "income",
+          "expense",
+          "referral-doctor",
+          "referral-hospital"
+        ]
+      },
+      {
+        "key": "source",
+        "type": "string"
+      },
+      {
+        "key": "amount",
+        "type": "float"
+      },
+      {
+        "key": "date",
+        "type": "datetime"
+      },
+      {
+        "key": "note",
+        "type": "text"
+      },
+      {
+        "key": "relatedUserId",
+        "type": "string"
+      }
+    ]
+  },
+  {
+    "name": "Earnings",
+    "attributes": [
+      {
+        "key": "userId",
+        "type": "string"
+      },
+      {
+        "key": "type",
+        "type": "enum",
+        "elements": [
+          "appointment",
+          "admission"
+        ]
+      },
+      {
+        "key": "relatedId",
+        "type": "string"
+      },
+      {
+        "key": "amount",
+        "type": "float"
+      },
+      {
+        "key": "date",
+        "type": "datetime"
+      }
+    ]
+  },
+  {
+    "name": "ActivityLogs",
+    "attributes": [
+      {
+        "key": "actionType",
+        "type": "enum",
+        "elements": [
+          "create",
+          "update",
+          "delete",
+          "login",
+          "logout"
+        ]
+      },
+      {
+        "key": "collectionName",
+        "type": "string"
+      },
+      {
+        "key": "documentId",
+        "type": "string"
+      },
+      {
+        "key": "performedBy",
+        "type": "string"
+      },
+      {
+        "key": "timestamp",
+        "type": "datetime"
+      },
+      {
+        "key": "details",
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "name": "MonthlyReports",
+    "attributes": [
+      {
+        "key": "month",
+        "type": "string"
+      },
+      {
+        "key": "totalPatients",
+        "type": "integer"
+      },
+      {
+        "key": "totalIncome",
+        "type": "float"
+      },
+      {
+        "key": "totalExpense",
+        "type": "float"
+      },
+      {
+        "key": "mostCommonDiagnosis",
+        "type": "string"
+      },
+      {
+        "key": "topEarningDoctorId",
+        "type": "string"
+      }
+    ]
+  },
+  {
+    "name": "PatientConsents",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string"
+      },
+      {
+        "key": "type",
+        "type": "enum",
+        "elements": [
+          "general",
+          "surgery",
+          "data-usage"
+        ]
+      },
+      {
+        "key": "signedAt",
+        "type": "datetime"
+      },
+      {
+        "key": "documentUrl",
+        "type": "string"
+      }
+    ]
+  },
+  {
+    "name": "Notifications",
+    "attributes": [
+      {
+        "key": "recipientRole",
+        "type": "string"
+      },
+      {
+        "key": "recipientUserId",
+        "type": "string"
+      },
+      {
+        "key": "message",
+        "type": "text"
+      },
+      {
+        "key": "relatedCollection",
+        "type": "string"
+      },
+      {
+        "key": "relatedDocumentId",
+        "type": "string"
+      },
+      {
+        "key": "status",
+        "type": "enum",
+        "elements": [
+          "read",
+          "unread"
+        ]
+      },
+      {
+        "key": "createdAt",
+        "type": "datetime"
+      }
+    ]
+  },
+  {
+    "name": "AI_AnalyticsLogs",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string"
+      },
+      {
+        "key": "visitsPerMonth",
+        "type": "integer"
+      },
+      {
+        "key": "frequentSymptoms",
+        "type": "string[]"
+      },
+      {
+        "key": "averageStayDays",
+        "type": "float"
+      },
+      {
+        "key": "readmissionRiskScore",
+        "type": "float"
+      },
+      {
+        "key": "updatedAt",
+        "type": "datetime"
+      }
+    ]
+  },
+  {
+    "name": "Doctors",
+    "attributes": [
+      {
+        "key": "userId",
+        "type": "string"
+      },
+      {
+        "key": "fullName",
+        "type": "string"
+      },
+      {
+        "key": "email",
+        "type": "string"
+      },
+      {
+        "key": "phone",
+        "type": "string"
+      },
+      {
+        "key": "photoUrl",
+        "type": "string"
+      },
+      {
+        "key": "specialty",
+        "type": "string"
+      },
+      {
+        "key": "department",
+        "type": "string"
+      },
+      {
+        "key": "licenseNumber",
+        "type": "string"
+      },
+      {
+        "key": "experienceYears",
+        "type": "integer"
+      },
+      {
+        "key": "availability",
+        "type": "text"
+      },
+      {
+        "key": "joinedDate",
+        "type": "datetime"
+      },
+      {
+        "key": "isActive",
+        "type": "boolean"
+      }
+    ]
+  },
+  {
+    "name": "Nurses",
+    "attributes": [
+      {
+        "key": "userId",
+        "type": "string"
+      },
+      {
+        "key": "fullName",
+        "type": "string"
+      },
+      {
+        "key": "email",
+        "type": "string"
+      },
+      {
+        "key": "phone",
+        "type": "string"
+      },
+      {
+        "key": "photoUrl",
+        "type": "string"
+      },
+      {
+        "key": "department",
+        "type": "string"
+      },
+      {
+        "key": "licenseNumber",
+        "type": "string"
+      },
+      {
+        "key": "shiftSchedule",
+        "type": "text"
+      },
+      {
+        "key": "joinedDate",
+        "type": "datetime"
+      },
+      {
+        "key": "isActive",
+        "type": "boolean"
+      }
+    ]
+  },
+  {
+    "name": "Pharmacists",
+    "attributes": [
+      {
+        "key": "userId",
+        "type": "string"
+      },
+      {
+        "key": "fullName",
+        "type": "string"
+      },
+      {
+        "key": "email",
+        "type": "string"
+      },
+      {
+        "key": "phone",
+        "type": "string"
+      },
+      {
+        "key": "photoUrl",
+        "type": "string"
+      },
+      {
+        "key": "licenseNumber",
+        "type": "string"
+      },
+      {
+        "key": "department",
+        "type": "string"
+      },
+      {
+        "key": "joinedDate",
+        "type": "datetime"
+      },
+      {
+        "key": "isActive",
+        "type": "boolean"
+      }
+    ]
+  },
+  {
+    "name": "Invoices",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string"
+      },
+      {
+        "key": "groupInvoiceId",
+        "type": "string"
+      },
+      {
+        "key": "createdBy",
+        "type": "string"
+      },
+      {
+        "key": "items",
+        "type": "object[]",
+        "properties": [
+          {
+            "key": "type",
+            "type": "enum",
+            "elements": [
+              "service",
+              "package",
+              "lab"
+            ]
+          },
+          {
+            "key": "refId",
+            "type": "string"
+          },
+          {
+            "key": "name",
+            "type": "string"
+          },
+          {
+            "key": "price",
+            "type": "float"
+          }
+        ]
+      },
+      {
+        "key": "totalAmount",
+        "type": "float"
+      },
+      {
+        "key": "status",
+        "type": "enum",
+        "elements": [
+          "paid",
+          "unpaid",
+          "partial"
+        ]
+      },
+      {
+        "key": "paymentMethod",
+        "type": "enum",
+        "elements": [
+          "cash",
+          "card",
+          "mobile",
+          "insurance"
+        ]
+      },
+      {
+        "key": "paidAt",
+        "type": "datetime"
+      },
+      {
+        "key": "paidBy",
+        "type": "string"
+      },
+      {
+        "key": "dateIssued",
+        "type": "datetime"
+      },
+      {
+        "key": "source",
+        "type": "enum",
+        "elements": [
+          "front-desk",
+          "pharmacy",
+          "system"
+        ]
+      },
+      {
+        "key": "note",
+        "type": "text"
+      },
+      {
+        "key": "isArchived",
+        "type": "boolean"
+      },
+      {
+        "key": "updatedBy",
+        "type": "string"
+      },
+      {
+        "key": "createdAt",
+        "type": "datetime"
+      },
+      {
+        "key": "updatedAt",
+        "type": "datetime"
+      }
+    ]
+  },
+  {
+    "name": "InventoryTransactions",
+    "attributes": [
+      {
+        "key": "itemId",
+        "type": "string"
+      },
+      {
+        "key": "type",
+        "type": "enum",
+        "elements": [
+          "in",
+          "out",
+          "adjustment"
+        ]
+      },
+      {
+        "key": "quantityChanged",
+        "type": "integer"
+      },
+      {
+        "key": "performedBy",
+        "type": "string"
+      },
+      {
+        "key": "reason",
+        "type": "text"
+      },
+      {
+        "key": "relatedInvoiceId",
+        "type": "string"
+      },
+      {
+        "key": "timestamp",
+        "type": "datetime"
+      }
+    ]
+  },
+  {
+    "name": "ServiceList",
+    "attributes": [
+      {
+        "key": "name",
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "type": "text"
+      },
+      {
+        "key": "basePrice",
+        "type": "float"
+      },
+      {
+        "key": "category",
+        "type": "string"
+      },
+      {
+        "key": "tags",
+        "type": "string[]"
+      },
+      {
+        "key": "isActive",
+        "type": "boolean"
+      }
+    ]
+  },
+  {
+    "name": "PackageDeals",
+    "attributes": [
+      {
+        "key": "name",
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "type": "text"
+      },
+      {
+        "key": "serviceIds",
+        "type": "string[]"
+      },
+      {
+        "key": "discountPercent",
+        "type": "float"
+      },
+      {
+        "key": "finalPrice",
+        "type": "float"
+      },
+      {
+        "key": "isActive",
+        "type": "boolean"
+      }
+    ]
+  },
+  {
+    "name": "ServiceUsage",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string"
+      },
+      {
+        "key": "serviceId",
+        "type": "string"
+      },
+      {
+        "key": "invoiceId",
+        "type": "string"
+      },
+      {
+        "key": "usedAt",
+        "type": "datetime"
+      },
+      {
+        "key": "performedBy",
+        "type": "string"
+      },
+      {
+        "key": "note",
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "name": "DocumentTemplates",
+    "attributes": [
+      {
+        "key": "name",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "type",
+        "type": "enum",
+        "elements": [
+          "consent",
+          "prescription",
+          "discharge",
+          "summary",
+          "custom"
+        ],
+        "required": true
+      },
+      {
+        "key": "content",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "createdBy",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "createdAt",
+        "type": "datetime",
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "PatientFiles",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "fileUrl",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "fileType",
+        "type": "enum",
+        "elements": [
+          "scan",
+          "report",
+          "referral",
+          "other"
+        ],
+        "required": true
+      },
+      {
+        "key": "uploadedBy",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "uploadedAt",
+        "type": "datetime",
+        "required": true
+      },
+      {
+        "key": "note",
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "name": "BillingHistory",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "invoiceId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "amountPaid",
+        "type": "float",
+        "required": true
+      },
+      {
+        "key": "paymentMethod",
+        "type": "enum",
+        "elements": [
+          "cash",
+          "card",
+          "mobile",
+          "insurance"
+        ],
+        "required": true
+      },
+      {
+        "key": "paidAt",
+        "type": "datetime",
+        "required": true
+      },
+      {
+        "key": "receivedBy",
+        "type": "string",
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "ServicePerformance",
+    "attributes": [
+      {
+        "key": "serviceId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "usageCount",
+        "type": "integer",
+        "required": true
+      },
+      {
+        "key": "lastUsed",
+        "type": "datetime"
+      },
+      {
+        "key": "averageRating",
+        "type": "float"
+      },
+      {
+        "key": "feedbackNotes",
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "name": "Receptionists",
+    "attributes": [
+      {
+        "key": "userId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "fullName",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "email",
+        "type": "string"
+      },
+      {
+        "key": "phone",
+        "type": "string"
+      },
+      {
+        "key": "photoUrl",
+        "type": "string"
+      },
+      {
+        "key": "deskNumber",
+        "type": "string"
+      },
+      {
+        "key": "joinedDate",
+        "type": "datetime"
+      },
+      {
+        "key": "isActive",
+        "type": "boolean"
+      }
+    ]
+  },
+  {
+    "name": "InventoryStaff",
+    "attributes": [
+      {
+        "key": "userId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "fullName",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "email",
+        "type": "string"
+      },
+      {
+        "key": "phone",
+        "type": "string"
+      },
+      {
+        "key": "photoUrl",
+        "type": "string"
+      },
+      {
+        "key": "warehouseZone",
+        "type": "string"
+      },
+      {
+        "key": "joinedDate",
+        "type": "datetime"
+      },
+      {
+        "key": "isActive",
+        "type": "boolean"
+      }
+    ]
+  },
+  {
+    "name": "Admins",
+    "attributes": [
+      {
+        "key": "userId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "fullName",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "email",
+        "type": "string"
+      },
+      {
+        "key": "phone",
+        "type": "string"
+      },
+      {
+        "key": "photoUrl",
+        "type": "string"
+      },
+      {
+        "key": "privileges",
+        "type": "string[]"
+      },
+      {
+        "key": "joinedDate",
+        "type": "datetime"
+      },
+      {
+        "key": "isActive",
+        "type": "boolean"
+      }
+    ]
+  },
+  {
+    "name": "LabTechnicians",
+    "attributes": [
+      {
+        "key": "userId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "fullName",
+        "type": "string"
+      },
+      {
+        "key": "email",
+        "type": "string"
+      },
+      {
+        "key": "phone",
+        "type": "string"
+      },
+      {
+        "key": "photoUrl",
+        "type": "string"
+      },
+      {
+        "key": "department",
+        "type": "string"
+      },
+      {
+        "key": "joinedDate",
+        "type": "datetime"
+      },
+      {
+        "key": "isActive",
+        "type": "boolean"
+      }
+    ]
+  },
+  {
+    "name": "LabTestCatalog",
+    "attributes": [
+      {
+        "key": "name",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "category",
+        "type": "string"
+      },
+      {
+        "key": "price",
+        "type": "float"
+      },
+      {
+        "key": "availableInHouse",
+        "type": "boolean"
+      },
+      {
+        "key": "createdBy",
+        "type": "string"
+      },
+      {
+        "key": "createdAt",
+        "type": "datetime"
+      }
+    ]
+  },
+  {
+    "name": "LabResultDetails",
+    "attributes": [
+      {
+        "key": "labResultId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "testItem",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "value",
+        "type": "string"
+      },
+      {
+        "key": "unit",
+        "type": "string"
+      },
+      {
+        "key": "referenceRange",
+        "type": "string"
+      },
+      {
+        "key": "flag",
+        "type": "enum",
+        "elements": [
+          "normal",
+          "high",
+          "low",
+          "critical"
+        ]
+      },
+      {
+        "key": "note",
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "name": "LabReports",
+    "attributes": [
+      {
+        "key": "month",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "totalTests",
+        "type": "integer"
+      },
+      {
+        "key": "inHouseCount",
+        "type": "integer"
+      },
+      {
+        "key": "externalCount",
+        "type": "integer"
+      },
+      {
+        "key": "averageCompletionTime",
+        "type": "float"
+      }
+    ]
+  }
+]
