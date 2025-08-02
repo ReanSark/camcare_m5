@@ -21,7 +21,8 @@ export async function loginUser(email: string, password: string) {
 
     // 👤 Get current user
     const user = await account.get();
-    console.log("✅ Logged in user ID:", user.$id);
+    // DEBUG CODE BELOW
+    // console.log("✅ Logged in user ID:", user.$id);
 
     // 🎯 Fetch role
     const roleDocs = await databases.listDocuments(DATABASE_ID, USER_ROLES_COLLECTION_ID, [
