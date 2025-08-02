@@ -12,6 +12,7 @@ interface AuthContextProps {
   role: string | null;
   loading: boolean;
   logout: () => void;
+  sessionChecked: boolean;
 }
 
 // Create context
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextProps>({
   role: null,
   loading: true,
   logout: () => {},
+  sessionChecked: false,
 });
 
 // Context provider
@@ -27,6 +29,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   // 🔐 Check for existing session on first load
   useEffect(() => {
@@ -38,10 +41,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!role) {
         console.error("❌ User role not found. Forcing logout.");
         await account.deleteSession("current");
+
         setUser(null);
         setRole(null);
         localStorage.removeItem("userRole");
         localStorage.removeItem("userId");
+        
         window.location.href = "/auth/login";
         return;
         }
@@ -62,6 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.removeItem("userId"); 
       } finally {
         setLoading(false); // ✅ Mark loading complete in all cases
+        setSessionChecked(true); // ✅ important
       }
     };
 
@@ -84,7 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, loading, logout }}>
+    <AuthContext.Provider value={{ user, role, loading, logout, sessionChecked }}>
       {children}
     </AuthContext.Provider>
   );

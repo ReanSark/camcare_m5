@@ -10,11 +10,18 @@ type RoleGuardProps = {
 };
 
 export default function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, sessionChecked } = useAuth();
   const router = useRouter();
+    
+  // DEBUGGING CODE
+  console.log("🔍 RoleGuard Debug:");
+  console.log("User:", user);
+  console.log("Role:", role);
+  console.log("Session checked:", sessionChecked);
+  console.log("Loading:", loading);
 
   useEffect(() => {
-    if (loading) return; // ⏳ wait until auth check finishes
+    if (!sessionChecked) return; // ⏳ wait until session is checked at all
 
     if (!user) {
       console.warn("🔐 No session — redirecting to login");
@@ -23,17 +30,17 @@ export default function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
       console.warn(`🚫 Unauthorized role "${role}" — redirecting to /403`);
       router.replace("/403");
     }
-  }, [user, role, loading, router, allowedRoles]);
+  }, [user, role, sessionChecked, router, allowedRoles]);
 
-  const isAuthorized = !!user && !!role && allowedRoles.includes(role);
-
-  if (loading) {
+  if (!sessionChecked || loading) {
     return (
       <div className="flex justify-center items-center h-screen text-gray-600">
         Loading session...
       </div>
     );
   }
+  
+  const isAuthorized = !!user && !!role && allowedRoles.includes(role);
 
   if (!isAuthorized) {
   return (

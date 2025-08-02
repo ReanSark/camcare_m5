@@ -1,29 +1,5 @@
 [
   {
-    "name": "UserRoles",
-    "attributes": [
-      {
-        "key": "userId",
-        "type": "string",
-        "required": true
-      },
-      {
-        "key": "role",
-        "type": "enum",
-        "elements": [
-          "Receptionist",
-          "Doctor",
-          "Nurse",
-          "Pharmacist",
-          "InventoryStaff",
-          "Admin",
-          "LabTechnician"
-        ],
-        "required": true
-      }
-    ]
-  },
-  {
     "name": "Patients",
     "attributes": [
       {
@@ -742,6 +718,14 @@
       {
         "key": "isActive",
         "type": "boolean"
+      },
+      {
+        "key": "role",
+        "type": "enum",
+        "elements": [
+          "Doctor"
+        ],
+        "required": true
       }
     ]
   },
@@ -787,6 +771,14 @@
       {
         "key": "isActive",
         "type": "boolean"
+      },
+      {
+        "key": "role",
+        "type": "enum",
+        "elements": [
+          "Nurse"
+        ],
+        "required": true
       }
     ]
   },
@@ -828,6 +820,14 @@
       {
         "key": "isActive",
         "type": "boolean"
+      },
+      {
+        "key": "role",
+        "type": "enum",
+        "elements": [
+          "Pharmacist"
+        ],
+        "required": true
       }
     ]
   },
@@ -1245,6 +1245,14 @@
       {
         "key": "isActive",
         "type": "boolean"
+      },
+      {
+        "key": "role",
+        "type": "enum",
+        "elements": [
+          "Receptionist"
+        ],
+        "required": true
       }
     ]
   },
@@ -1284,6 +1292,14 @@
       {
         "key": "isActive",
         "type": "boolean"
+      },
+      {
+        "key": "role",
+        "type": "enum",
+        "elements": [
+          "InventoryStaff"
+        ],
+        "required": true
       }
     ]
   },
@@ -1323,6 +1339,14 @@
       {
         "key": "isActive",
         "type": "boolean"
+      },
+      {
+        "key": "role",
+        "type": "enum",
+        "elements": [
+          "Admin"
+        ],
+        "required": true
       }
     ]
   },
@@ -1361,6 +1385,14 @@
       {
         "key": "isActive",
         "type": "boolean"
+      },
+      {
+        "key": "role",
+        "type": "enum",
+        "elements": [
+          "LabTechnician"
+        ],
+        "required": true
       }
     ]
   },
