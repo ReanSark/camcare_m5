@@ -11,6 +11,7 @@ const roleAccessMap: Record<string, string[]> = {
   '/dashboard/receptionist': ['Receptionist'],
   '/dashboard/pharmacist': ['Pharmacist'],
   '/dashboard/inventory': ['Inventory'],
+  '/dashboard/labtechnician': ['LabTechnician'],
 };
 
 export const Protected = ({ children }: { children: React.ReactNode }) => {

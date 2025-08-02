@@ -10,6 +10,7 @@ export function redirectByRole(role: string, router: Router) {
     Receptionist: "/dashboard/receptionist",
     Pharmacist: "/dashboard/pharmacist",
     Inventory: "/dashboard/inventory",
+    LabTechnician: "/dashboard/labtechnician",
   };
 
   const route = dashboardMap[role];
