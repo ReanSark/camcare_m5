@@ -19,10 +19,11 @@ export const Protected = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (loading) return;
+    if (loading) return;// ✅ ADDED: prevent premature redirect
 
     // Not logged in
     if (!user) {
+      console.warn("🔐 No user, redirecting to login"); // ✅ ADDED for clarity
       router.push('/auth/login');
       return;
     }
@@ -33,13 +34,14 @@ export const Protected = ({ children }: { children: React.ReactNode }) => {
     )?.[1];
 
     if (allowedRoles && (!role || !allowedRoles.includes(role))) {
-        router.push('/403'); // Or show your own "Access Denied"
-        return;
+      console.warn("🚫 Unauthorized role, redirecting to /403");
+      router.push('/403'); // Or show your own "Access Denied"
+      return;
     }
 
   }, [user, role, loading, pathname, router]);
 
-  if (loading) return <div className="p-4">Loading...</div>;
+  if (loading || !user) return <div className="p-4">Loading...</div>; // 🔁 ADDED `!user` guard to match early return
 
   return <>{children}</>;
 };

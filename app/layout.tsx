@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <Toaster richColors />
           {children}
-          </AuthProvider>
+        </AuthProvider>
       </body>
     </html>
   );

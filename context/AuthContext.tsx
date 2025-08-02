@@ -5,54 +5,60 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { account, databases } from "@/lib/appwrite.client";
 import { Query, Models } from "appwrite";
 
-type AuthContextType = {
-  user: Models.User<Models.Preferences> | null;
+// Type for the context
+interface AuthContextProps {
+  user: Models.User<Record<string, unknown>> | null;
   role: string | null;
   loading: boolean;
-  logout: () => Promise<void>;
-};
+  logout: () => void;
+}
 
-const AuthContext = createContext<AuthContextType>({
+// Create context
+const AuthContext = createContext<AuthContextProps>({
   user: null,
   role: null,
   loading: true,
-  logout: async () => {},
+  logout: () => {},
 });
 
+// Context provider
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const router = useRouter();
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
   const [role, setRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
 
-  const fetchUser = async () => {
-    try {
-      const acc = await account.get(); // type: Models.User<Models.Preferences>
-      const roleDocs = await databases.listDocuments("camcare_db", "UserRoles", [
-        Query.equal("userId", acc.$id),
-      ]);
-      setUser(acc);
-      setRole(roleDocs.documents[0]?.role ?? null);
-    } catch {
-      setUser(null);
-      setRole(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // 🔐 Check for existing session on first load
   useEffect(() => {
-    fetchUser();
+    const checkSession = async () => {
+      try {
+        const user = await account.get(); // Try to fetch current session
+        const cachedRole = localStorage.getItem("userRole");
+
+        setUser(user);
+        setRole(cachedRole ?? null); // Fallback if role not yet cached
+      } catch (err) {
+        setUser(null);
+        setRole(null); // No session found
+      } finally {
+        setLoading(false); // ✅ Mark loading complete in all cases
+      }
+    };
+
+    checkSession();
   }, []);
 
+  // 🔓 Logout function — clears session and local state
   const logout = async () => {
     try {
       await account.deleteSession("current");
+    } catch (err) {
+      console.warn("Logout failed (maybe already logged out)", err);
+    } finally {
       setUser(null);
       setRole(null);
-      router.push("/auth/login");
-    } catch (error) {
-      console.error("Logout error:", error);
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("userId");
+      window.location.href = "/auth/login";
     }
   };
 
@@ -63,4 +69,5 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+// 🔁 Hook to access context
 export const useAuth = () => useContext(AuthContext);

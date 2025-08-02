@@ -6,7 +6,11 @@ import { Protected } from '@/components/Protected';
 import { useAuth } from "@/context/AuthContext";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { role, logout } = useAuth();
+  const { role, logout, loading } = useAuth();
+
+  // Optional: prevent early hydration mismatches
+  if (loading) return null;
+
   return (
     <Protected>
       <div className="min-h-screen flex">

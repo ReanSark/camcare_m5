@@ -23,7 +23,7 @@ export default function LoginPage() {
           redirectByRole(role, router);
         }
       } catch {
-        // no session — stay on page
+        // Not logged in
       }
     };
     checkSession();

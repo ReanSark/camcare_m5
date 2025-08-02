@@ -14,23 +14,29 @@ export default function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push("/auth/login");
-      } else if (!role || !allowedRoles.includes(role)) {
-        router.push("/403");
-      }
+    if (loading) return; // ⏳ wait until auth check finishes
+
+    if (!user) {
+      console.warn("🔐 No session — redirecting to login");
+      router.push("/auth/login");
+    } else if (!role || !allowedRoles.includes(role)) {
+      console.warn(`🚫 Unauthorized role "${role}" — redirecting to /403`);
+      router.push("/403");
     }
   }, [user, role, loading, router, allowedRoles]);
 
   const isAuthorized = !!user && !!role && allowedRoles.includes(role);
 
-  if (loading || !isAuthorized) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-screen text-gray-600">
-        Checking permissions...
+        Loading session...
       </div>
     );
+  }
+
+  if (!isAuthorized) {
+    return null; // or return a fallback UI if needed
   }
 
   return <>{children}</>;
