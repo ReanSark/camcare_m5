@@ -10,7 +10,7 @@ const roleAccessMap: Record<string, string[]> = {
   '/dashboard/nurse': ['Nurse'],
   '/dashboard/receptionist': ['Receptionist'],
   '/dashboard/pharmacist': ['Pharmacist'],
-  '/dashboard/inventory': ['Inventory'],
+  '/dashboard/inventory': ['InventoryStaff'],
   '/dashboard/labtechnician': ['LabTechnician'],
 };
 

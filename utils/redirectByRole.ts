@@ -12,7 +12,7 @@ export function getDashboardPath(role: string): string {
     Nurse: "/dashboard/nurse",
     Receptionist: "/dashboard/receptionist",
     Pharmacist: "/dashboard/pharmacist",
-    Inventory: "/dashboard/inventory",
+    InventoryStaff: "/dashboard/inventory",
     LabTechnician: "/dashboard/labtechnician",
   };
 

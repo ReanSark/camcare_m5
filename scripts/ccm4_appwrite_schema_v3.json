@@ -15,7 +15,7 @@
           "Doctor",
           "Nurse",
           "Pharmacist",
-          "Inventory",
+          "InventoryStaff",
           "Admin",
           "LabTechnician"
         ],
