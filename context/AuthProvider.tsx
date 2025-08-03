@@ -2,8 +2,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { account, databases } from "@/lib/appwrite.config";
+import { account, databases, DATABASE_ID, } from "@/lib/appwrite.config";
 import { Models, Query } from "appwrite";
+import { COLLECTIONS } from "@/lib/collections";
 
 interface User {
   id: string;
@@ -23,43 +24,73 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = async () => {
-    try {
-      const session = await account.get();
-      const userId = session.$id;
+const fetchUser = async () => {
+  try {
+    console.log("🔍 Checking session via account.getSession()");
+    const session = await account.getSession("current");
 
-      const roles = ["Receptionists", "Doctors", "Pharmacists", "LabTechnicians"];
-      let userRole = "";
+    if (!session || !session.userId) {
+      console.log("⚠️ No session found. User is not logged in.");
+      setUser(null);
+      return;
+    }
 
-      for (const collection of roles) {
+    console.log("✅ Session found:", session);
+
+    const userId = session.userId;
+
+    const roles = [
+      COLLECTIONS.RECEPTIONISTS,
+      COLLECTIONS.DOCTORS,
+      COLLECTIONS.PHARMACISTS,
+      COLLECTIONS.LABTECHNICIANS
+    ];
+    console.log("Loaded collection IDs:", {
+      mvp_receptionists: COLLECTIONS.RECEPTIONISTS,
+      mvp_doctors: COLLECTIONS.DOCTORS,
+      mvp_pharmacists: COLLECTIONS.PHARMACISTS,
+      mvp_labTechnicians: COLLECTIONS.LABTECHNICIANS,
+    });
+
+    for (const collection of roles) {
+      console.log(`📦 Checking user in collection: ${collection}`);
+
+      try {
         const res = await databases.listDocuments(
-          "camcare-db", // change this to your actual database ID
+          DATABASE_ID,
           collection,
           [Query.equal("userId", userId)]
         );
 
         if (res.total > 0) {
-          userRole = res.documents[0].role;
-          break;
-        }
-      }
+          const doc = res.documents[0];
+          console.log("✅ User found in:", collection, doc);
 
-      if (!userRole) {
-        setUser(null);
-      } else {
-        setUser({
-          id: userId,
-          email: session.email,
-          name: session.name,
-          role: userRole,
-        });
+          setUser({
+            id: userId,
+            email: doc.email ?? "",
+            name: doc.fullName ?? "",
+            role: doc.role,
+          });
+
+          return;
+        }
+      } catch (collectionError) {
+        console.warn(`❌ Error querying ${collection}:`, collectionError);
+        // Don't throw — continue to next collection
       }
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);// 🛑 Only mark complete here
     }
-  };
+
+    console.log("⚠️ No matching role document found.");
+    setUser(null);
+  } catch (err) {
+    console.error("❌ Auth fetch error:", err);
+    setUser(null);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     fetchUser();
