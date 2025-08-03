@@ -15,40 +15,74 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    console.log("🚀 LOGINPAGE: Login form submitted");
 
     try {
+      // 🔐 Optional cleanup: delete session before creating a new one
+      try {
+        await account.deleteSession("current");
+        console.log("🧹 LOGINPAGE: Previous session cleared");
+      } catch (cleanupError) {
+        console.warn("⚠️ LOGINPAGE: No session to delete:", cleanupError);
+      }
+
+      // 1. 🔐 Login with Appwrite
       await account.createEmailPasswordSession(email, password);
+      console.log("✅ LOGINPAGE: Login session created");
+
+      // 2. 👤 Get session user data
       const sessionUser = await account.get();
       const userId = sessionUser.$id;
+      console.log("👤 LOGINPAGE: Fetched session user:", sessionUser);
 
-      // Fetch role (from one of the role-specific collections)
-      const roles = ["Receptionists", "Doctors", "Pharmacists", "LabTechnicians"];
+      // 3. 🔍 Find the user’s role from specific MVP collections
+      const roles = [
+        process.env.NEXT_PUBLIC_MVP_RECEPTIONISTS_COLLECTION_ID!,
+        process.env.NEXT_PUBLIC_MVP_DOCTORS_COLLECTION_ID!,
+        process.env.NEXT_PUBLIC_MVP_PHARMACISTS_COLLECTION_ID!,
+        process.env.NEXT_PUBLIC_MVP_LABTECHNICIANS_COLLECTION_ID!
+      ];
+
       let userRole = "";
 
-      for (const collection of roles) {
-        const res = await databases.listDocuments(
-          DATABASE_ID, // replace with your DB ID
-          collection,
-          [Query.equal("userId", userId)]
-        );
-        if (res.total > 0) {
-          userRole = res.documents[0].role;
-          break;
+      for (const collectionId of roles) {
+        console.log("📦 LOGINPAGE: Checking user in collection:", collectionId);
+
+        try {
+          const res = await databases.listDocuments(
+            DATABASE_ID,
+            collectionId,
+            [Query.equal("userId", userId)]
+          );
+          console.log(`📄 LOGINPAGE: Query result from ${collectionId}:`, res);
+
+          if (res.total > 0) {
+            userRole = res.documents[0].role;
+            console.log("✅ LOGINPAGE: Role found:", userRole);
+            break;
+          }
+        } catch (queryError) {
+          console.error("❌ LOGINPAGE: Error querying collection:", collectionId, queryError);
         }
       }
 
       if (!userRole) {
-        setError("Role not assigned.");
+        setError("LOGINPAGE: Role not assigned. Contact admin.");
+        console.warn("⚠️ LOGINPAGE: No role found for user.");
         return;
       }
 
-      router.push(getDashboardPath(userRole));
+      // 4. 🚀 Redirect to role-specific dashboard
+      const dashboardPath = getDashboardPath(userRole);
+      console.log("📍 LOGINPAGE: Redirecting to:", dashboardPath);
+      router.push(dashboardPath);
     } catch (err) {
-        if (err instanceof Error) {
-            setError(err.message);
-        } else {
-            setError("Login failed.");
-        }
+      console.error("❌ LOGINPAGE: Login failed:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("LOGINPAGE: Login failed.");
+      }
     }
   };
 

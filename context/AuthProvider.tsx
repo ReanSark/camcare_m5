@@ -26,16 +26,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 const fetchUser = async () => {
   try {
-    console.log("🔍 Checking session via account.getSession()");
+    console.log("🔍 AUTH: Checking session via account.getSession()");
     const session = await account.getSession("current");
 
     if (!session || !session.userId) {
-      console.log("⚠️ No session found. User is not logged in.");
+      console.log("⚠️ AUTH: No session found. User is not logged in.");
       setUser(null);
       return;
     }
 
-    console.log("✅ Session found:", session);
+    console.log("✅ AUTH: Session found:", session);
 
     const userId = session.userId;
 
@@ -45,7 +45,7 @@ const fetchUser = async () => {
       COLLECTIONS.PHARMACISTS,
       COLLECTIONS.LABTECHNICIANS
     ];
-    console.log("Loaded collection IDs:", {
+    console.log("AUTH: Loaded collection IDs:", {
       mvp_receptionists: COLLECTIONS.RECEPTIONISTS,
       mvp_doctors: COLLECTIONS.DOCTORS,
       mvp_pharmacists: COLLECTIONS.PHARMACISTS,
@@ -53,7 +53,7 @@ const fetchUser = async () => {
     });
 
     for (const collection of roles) {
-      console.log(`📦 Checking user in collection: ${collection}`);
+      console.log(`📦 AUTH: Checking user in collection: ${collection}`);
 
       try {
         const res = await databases.listDocuments(
@@ -64,7 +64,7 @@ const fetchUser = async () => {
 
         if (res.total > 0) {
           const doc = res.documents[0];
-          console.log("✅ User found in:", collection, doc);
+          console.log("✅ AUTH: User found in:", collection, doc);
 
           setUser({
             id: userId,
@@ -76,15 +76,15 @@ const fetchUser = async () => {
           return;
         }
       } catch (collectionError) {
-        console.warn(`❌ Error querying ${collection}:`, collectionError);
+        console.warn(`❌ AUTH: Error querying ${collection}:`, collectionError);
         // Don't throw — continue to next collection
       }
     }
 
-    console.log("⚠️ No matching role document found.");
+    console.log("⚠️ AUTH: No matching role document found.");
     setUser(null);
   } catch (err) {
-    console.error("❌ Auth fetch error:", err);
+    console.error("❌ AUTH: Auth fetch error:", err);
     setUser(null);
   } finally {
     setLoading(false);
