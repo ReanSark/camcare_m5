@@ -30,6 +30,12 @@ export default function LoginPage() {
       await account.createEmailPasswordSession(email, password);
       console.log("✅ LOGINPAGE: Login session created");
 
+      // Optional: short pause to allow cookies to propagate
+      await new Promise((res) => setTimeout(res, 100));
+
+      // Hard reload to ensure session is available to AuthProvider
+      window.location.href = "/dashboard/receptionist";
+
       // 2. 👤 Get session user data
       const sessionUser = await account.get();
       const userId = sessionUser.$id;
