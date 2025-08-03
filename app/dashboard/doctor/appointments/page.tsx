@@ -1,13 +1,13 @@
 // dashboard/doctor/appointments/page.tsx
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { databases, account } from "@/lib/appwrite.config";
 import { DATABASE_ID } from "@/lib/appwrite.config";
 import { COLLECTIONS } from "@/lib/collections";
 import type { Appointment, Patient, Doctor } from "@/types";
 import { Button } from "@/components/ui/Button";
-import Link from "next/link";
 import { toast } from "sonner";
 
 export default function DoctorAppointmentsPage() {
@@ -100,7 +100,7 @@ export default function DoctorAppointmentsPage() {
               {appointments.map((appt) => (
                 <tr key={appt.$id} className="border-t">
                   <td className="p-2 border">{patientsMap[appt.patientId] ?? "-"}</td>
-                  <td className="p-2 border">{new Date(appt.date).toLocaleString()}</td>
+                  <td className="p-2 border">{appt.date ? new Date(appt.date).toLocaleString() : "-"}</td>
                   <td className="p-2 border">{appt.reason || "-"}</td>
                   <td className="p-2 border capitalize">{appt.status}</td>
                   <td className="p-2 border">
