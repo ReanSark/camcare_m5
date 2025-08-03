@@ -1,4 +1,4 @@
-import RoleGuard from "@/components/RoleGuard";
+import RoleGuard from "@/components/FutureRoleGuard";
 
 export default function AdminDashboard() {
   return (

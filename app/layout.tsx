@@ -1,11 +1,11 @@
 // app/layout.tsx
 import "./globals.css";
 import { Toaster } from 'sonner'
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider } from "@/context/FutureAuthContext";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Camcare M4",
+  title: "Camcare Clinic System",
   description: "Clinic Management System",
 };
 
