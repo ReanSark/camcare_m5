@@ -1,7 +1,7 @@
 // app/layout.tsx
 import "./globals.css";
 import { Toaster } from 'sonner'
-import { AuthProvider } from "@/context/FutureAuthContext";
+import { AuthProvider } from "@/context/AuthProvider";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

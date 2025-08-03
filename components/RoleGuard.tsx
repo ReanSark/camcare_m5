@@ -15,12 +15,20 @@ export default function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && (!user || !allowedRoles.includes(user.role))) {
-      router.push("/auth/login");
+    if (!loading) {
+      if (!user) {
+        router.push("/403"); // safer fallback
+      } else if (!allowedRoles.includes(user.role)) {
+        router.push("/403");
+      }
     }
   }, [user, loading, allowedRoles, router]);
 
-  if (loading || !user) return null;
+  // Still waiting for session to resolve
+  if (loading) return null;
+
+  // Prevent showing anything while redirecting
+  if (!user || !allowedRoles.includes(user.role)) return null;
 
   return <>{children}</>;
 }
