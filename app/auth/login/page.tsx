@@ -81,7 +81,7 @@ export default function LoginPage() {
       // 4. 🚀 Redirect to role-specific dashboard
       const dashboardPath = getDashboardPath(userRole);
       console.log("📍 LOGINPAGE: Redirecting to:", dashboardPath);
-      router.push(dashboardPath);
+      window.location.href = dashboardPath;
     } catch (err) {
       console.error("❌ LOGINPAGE: Login failed:", err);
       if (err instanceof Error) {
