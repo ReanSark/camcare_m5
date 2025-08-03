@@ -1,9 +1,8 @@
 // types/index.ts
 
 // Patient
-import { Models } from 'appwrite';
-
-export interface Patient extends Models.Document {
+export interface Patient {
+  $id: string;
   fullName: string;
   gender: "Male" | "Female" | "Other";
   dob?: string;
