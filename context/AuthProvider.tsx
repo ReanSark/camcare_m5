@@ -9,6 +9,7 @@ import { COLLECTIONS } from "@/lib/collections";
 // User type exposed through context
 interface User {
   id: string;
+  $id: string; // ✅ added
   email: string;
   name: string;
   role: string;
@@ -77,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             setUser({
               id: userId,
+              $id: doc.$id, // ✅ added
               email: doc.email ?? "",
               name: doc.fullName ?? "",
               role: doc.role,

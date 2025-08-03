@@ -31,10 +31,10 @@ export default function LoginPage() {
       console.log("✅ LOGINPAGE: Login session created");
 
       // Optional: short pause to allow cookies to propagate
-      await new Promise((res) => setTimeout(res, 100));
+      await new Promise((res) => setTimeout(res, 1000));
 
       // Hard reload to ensure session is available to AuthProvider
-      window.location.href = "/dashboard/receptionist";
+      // window.location.href = "/dashboard/receptionist";
 
       // 2. 👤 Get session user data
       const sessionUser = await account.get();
