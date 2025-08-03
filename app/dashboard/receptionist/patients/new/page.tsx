@@ -1,25 +1,28 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
-import { Label } from "@/components/ui/Label";
-import { toast } from "sonner";
-import { databases } from "@/lib/appwrite.config";
-import { DATABASE_ID } from "@/lib/appwrite.config";
-import { COLLECTIONS } from "@/lib/collections";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Label } from '@/components/ui/Label';
+import { toast } from 'sonner';
+import { databases } from '@/lib/appwrite.config';
+import { DATABASE_ID } from '@/lib/appwrite.config';
+import { COLLECTIONS } from '@/lib/collections';
+import { ID } from 'appwrite';
+import type { Patient } from '@/types';
 
 export default function NewPatientPage() {
   const router = useRouter();
-  const [form, setForm] = useState({
-    fullName: "",
-    gender: "Male",
-    dob: "",
-    phone: "",
-    email: "",
-    address: "",
-    other: "",
+
+  const [form, setForm] = useState<Omit<Patient, '$id'>>({
+    fullName: '',
+    gender: 'Male',
+    dob: '',
+    phone: '',
+    email: '',
+    address: '',
+    other: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -33,15 +36,15 @@ export default function NewPatientPage() {
       await databases.createDocument(
         DATABASE_ID,
         COLLECTIONS.PATIENTS,
-        "unique()",
+        ID.unique(),
         form
       );
 
-      toast.success("Patient registered");
-      router.push("/dashboard/receptionist/patients");
+      toast.success('Patient registered');
+      router.push('/dashboard/receptionist/patients');
     } catch (err) {
       console.error(err);
-      toast.error("Failed to register patient");
+      toast.error('Failed to register patient');
     }
   };
 
@@ -56,7 +59,12 @@ export default function NewPatientPage() {
 
         <div>
           <Label htmlFor="gender">Gender</Label>
-          <select name="gender" value={form.gender} onChange={handleChange} className="w-full p-2 rounded border">
+          <select
+            name="gender"
+            value={form.gender}
+            onChange={handleChange}
+            className="w-full p-2 rounded border"
+          >
             <option>Male</option>
             <option>Female</option>
             <option>Other</option>
