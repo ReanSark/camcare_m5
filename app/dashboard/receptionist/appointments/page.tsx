@@ -1,14 +1,13 @@
-// appointments/page.tsx
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { databases } from "@/lib/appwrite.config";
-import { DATABASE_ID } from "@/lib/appwrite.config";
-import { COLLECTIONS } from "@/lib/collections";
-import Link from "next/link";
-import { Button } from "@/components/ui/Button";
-import { toast } from "sonner";
-import type { Appointment, Patient, Doctor } from "@/types";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import { databases } from '@/lib/appwrite.config';
+import { DATABASE_ID } from '@/lib/appwrite.config';
+import { COLLECTIONS } from '@/lib/collections';
+import { Button } from '@/components/ui/Button';
+import type { Appointment, Patient, Doctor } from '@/types';
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -25,16 +24,18 @@ export default function AppointmentsPage() {
           databases.listDocuments(DATABASE_ID, COLLECTIONS.DOCTORS),
         ]);
 
+        // ✅ Remap appointment docs manually
         const apps = appsRes.documents.map((doc): Appointment => ({
           $id: doc.$id,
           patientId: doc.patientId,
           doctorIds: doc.doctorIds ?? [],
           date: doc.date,
-          reason: doc.reason ?? "",
-          status: doc.status ?? "scheduled",
+          reason: doc.reason ?? '',
+          status: doc.status ?? 'scheduled',
         }));
         setAppointments(apps);
 
+        // ✅ Map patient ID to full name
         const patients = patsRes.documents.map((doc): Patient => ({
           $id: doc.$id,
           fullName: doc.fullName,
@@ -45,13 +46,13 @@ export default function AppointmentsPage() {
           address: doc.address,
           other: doc.other,
         }));
-
         const patientMap: Record<string, string> = {};
         patients.forEach((p) => {
           patientMap[p.$id] = p.fullName;
         });
         setPatientsMap(patientMap);
 
+        // ✅ Map doctor ID to full name
         const doctors = docsRes.documents.map((doc): Doctor => ({
           $id: doc.$id,
           fullName: doc.fullName,
@@ -59,14 +60,14 @@ export default function AppointmentsPage() {
           userId: doc.userId,
           other: doc.other,
         }));
-
         const doctorMap: Record<string, string> = {};
         doctors.forEach((d) => {
           doctorMap[d.$id] = d.fullName;
         });
         setDoctorsMap(doctorMap);
       } catch (err) {
-        toast.error("Failed to load appointments");
+        console.error('Failed to load appointments:', err);
+        toast.error('Failed to load appointments');
       } finally {
         setLoading(false);
       }
@@ -77,6 +78,7 @@ export default function AppointmentsPage() {
 
   return (
     <div className="p-6">
+      {/* ✅ Page header */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Appointments</h1>
         <Link href="/dashboard/receptionist/appointments/new">
@@ -84,6 +86,7 @@ export default function AppointmentsPage() {
         </Link>
       </div>
 
+      {/* ✅ Table or feedback */}
       {loading ? (
         <p>Loading...</p>
       ) : appointments.length === 0 ? (
@@ -102,11 +105,15 @@ export default function AppointmentsPage() {
             <tbody>
               {appointments.map((appt) => (
                 <tr key={appt.$id} className="border-t">
-                  <td className="p-2 border">{patientsMap[appt.patientId] ?? "-"}</td>
+                  <td className="p-2 border">{patientsMap[appt.patientId] ?? '-'}</td>
                   <td className="p-2 border">
-                    {appt.doctorIds.map((id) => doctorsMap[id]).join(", ") || "-"}
+                    {appt.doctorIds
+                      .map((id) => doctorsMap[id] || '(unknown)')
+                      .join(', ') || '-'}
                   </td>
-                  <td className="p-2 border">{new Date(appt.date).toLocaleString()}</td>
+                  <td className="p-2 border">
+                    {new Date(appt.date).toLocaleString()}
+                  </td>
                   <td className="p-2 border capitalize">{appt.status}</td>
                 </tr>
               ))}
