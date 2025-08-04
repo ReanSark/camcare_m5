@@ -1,16 +1,41 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { account, databases, DATABASE_ID } from "@/lib/appwrite.config";
 import { getDashboardPath } from "@/utils/redirectByRole";
 import { Query } from "appwrite";
+import { useAuth } from "@/context/AuthProvider";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const { user, loading } = useAuth();
+
+    // 🔄 Check if user already logged in and redirect if so
+  useEffect(() => {
+    if (loading) {
+      console.log("⏳ LOGINPAGE: Waiting for auth loading...");
+      return;
+    }
+    if (user) {
+      const dashboardPath = `/dashboard/${user.role.toLowerCase()}`;
+      console.log("➡️ LOGINPAGE: User is already logged in, redirecting to:", dashboardPath);
+      router.replace(dashboardPath);
+    }
+  }, [loading, user, router]);
+
+  if (loading) {
+    console.log("⏳ LOGINPAGE: Still loading auth state, rendering nothing.");
+    return null; // Or a spinner
+  }
+
+  if (user) {
+    console.log("⏩ LOGINPAGE: User found, already redirecting...");
+    return null; // Prevents login form render during redirect
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
