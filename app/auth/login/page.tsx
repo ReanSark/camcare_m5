@@ -71,7 +71,7 @@ export default function LoginPage() {
         process.env.NEXT_PUBLIC_MVP_RECEPTIONISTS_COLLECTION_ID!,
         process.env.NEXT_PUBLIC_MVP_DOCTORS_COLLECTION_ID!,
         process.env.NEXT_PUBLIC_MVP_PHARMACISTS_COLLECTION_ID!,
-        process.env.NEXT_PUBLIC_MVP_LABTECHNICIANS_COLLECTION_ID!
+        process.env.NEXT_PUBLIC_LABTECHNICIANS_COLLECTION_ID!
       ];
 
       let userRole = "";

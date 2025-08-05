@@ -10,6 +10,9 @@ import { DATABASE_ID } from '@/lib/appwrite.config';
 import { COLLECTIONS } from '@/lib/collections';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import type { LabResult } from '@/types';
+
+const STATUS_OPTIONS = ['pending', 'processing', 'completed', 'canceled'] as const;
 
 export default function NewLabResultPage() {
   const router = useRouter();
@@ -17,11 +20,14 @@ export default function NewLabResultPage() {
   const { user } = useAuth();
 
   const [patientId, setPatientId] = useState('');
+  const [patientName, setPatientName] = useState('');
   const [diagnosisId, setDiagnosisId] = useState('');
-  const [testIds, setTestIds] = useState<string[]>(['']);
-  const [status, setStatus] = useState<'pending' | 'completed'>('pending');
+  const [testName, setTestName] = useState('');
+  const [status, setStatus] = useState<(typeof STATUS_OPTIONS)[number]>('pending');
+  const [labSource, setLabSource] = useState<'in-house' | 'external'>('in-house');
   const [loading, setLoading] = useState(false);
 
+  // Extract patientId and diagnosisId from query params
   useEffect(() => {
     const pid = searchParams.get('patientId');
     const did = searchParams.get('diagnosisId');
@@ -29,28 +35,34 @@ export default function NewLabResultPage() {
     if (did) setDiagnosisId(did);
   }, [searchParams]);
 
-  const handleTestChange = (index: number, value: string) => {
-    const updated = [...testIds];
-    updated[index] = value;
-    setTestIds(updated);
-  };
-
-  const addTest = () => {
-    setTestIds([...testIds, '']);
-  };
-
-  const removeTest = (index: number) => {
-    setTestIds(testIds.filter((_, i) => i !== index));
-  };
+  // Fetch patient full name by ID
+  useEffect(() => {
+    async function fetchPatientName() {
+      if (patientId) {
+        try {
+          const doc = await databases.getDocument(
+            DATABASE_ID,
+            COLLECTIONS.PATIENTS,
+            patientId
+          );
+          setPatientName(doc.fullName || '');
+        } catch {
+          setPatientName('');
+        }
+      } else {
+        setPatientName('');
+      }
+    }
+    fetchPatientName();
+  }, [patientId]);
 
   const handleSubmit = async () => {
-    if (!user?.$id || !patientId) {
+    if (!user?.id || !patientId) {
       toast.warning('Missing technician or patient information');
       return;
     }
-
-    if (testIds.length === 0 || testIds.every((id) => id.trim() === '')) {
-      toast.warning('At least one test must be recorded');
+    if (!testName.trim()) {
+      toast.warning('Test name is required');
       return;
     }
 
@@ -62,10 +74,13 @@ export default function NewLabResultPage() {
         ID.unique(),
         {
           patientId,
-          appointmentId: diagnosisId || '',
-          testIds,
+          diagnosisId,
+          testName,
           status,
-          enteredBy: user.$id,
+          labSource,
+          processedBy: user.id,   // Use user.id for user reference
+          createdBy: user.id,
+          createdAt: new Date().toISOString(),
         }
       );
 
@@ -84,13 +99,22 @@ export default function NewLabResultPage() {
       <h1 className="text-xl font-bold">Log Lab Result</h1>
 
       <div>
-        <label className="block mb-1">Patient ID</label>
-        <Input
-          value={patientId}
-          onChange={(e) => setPatientId(e.target.value)}
-          placeholder="Patient ID"
-          required
-        />
+        <label className="block mb-1">Patient</label>
+        {patientId ? (
+          patientName ? (
+            <div className="p-2 border rounded bg-gray-50">
+              {patientName} <span className="text-gray-400">({patientId})</span>
+            </div>
+          ) : (
+            <div className="p-2 border rounded bg-gray-50 text-red-500">
+              Patient not found ({patientId})
+            </div>
+          )
+        ) : (
+          <div className="p-2 border rounded bg-gray-50 text-gray-400 italic">
+            No patient selected
+          </div>
+        )}
       </div>
 
       <div>
@@ -98,29 +122,30 @@ export default function NewLabResultPage() {
         <Input
           value={diagnosisId}
           onChange={(e) => setDiagnosisId(e.target.value)}
-          placeholder="Diagnosis or Appointment ID"
+          placeholder="Diagnosis ID"
         />
       </div>
 
-      <div className="space-y-2">
-        <label className="block">Tests Performed</label>
-        {testIds.map((test, i) => (
-          <div key={i} className="flex gap-2 items-center">
-            <Input
-              value={test}
-              onChange={(e) => handleTestChange(i, e.target.value)}
-              placeholder="Test ID or name"
-            />
-            {i > 0 && (
-              <Button type="button" onClick={() => removeTest(i)} variant="destructive">
-                ✕
-              </Button>
-            )}
-          </div>
-        ))}
-        <Button type="button" onClick={addTest} variant="outline">
-          + Add Test
-        </Button>
+      <div>
+        <label className="block mb-1">Test Name</label>
+        <Input
+          value={testName}
+          onChange={(e) => setTestName(e.target.value)}
+          placeholder="e.g. CBC, Blood Glucose"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1">Lab Source</label>
+        <select
+          className="w-full border rounded p-2"
+          value={labSource}
+          onChange={(e) => setLabSource(e.target.value as 'in-house' | 'external')}
+        >
+          <option value="in-house">In-House</option>
+          <option value="external">External</option>
+        </select>
       </div>
 
       <div>
@@ -128,10 +153,11 @@ export default function NewLabResultPage() {
         <select
           className="w-full border rounded p-2"
           value={status}
-          onChange={(e) => setStatus(e.target.value as 'pending' | 'completed')}
+          onChange={(e) => setStatus(e.target.value as (typeof STATUS_OPTIONS)[number])}
         >
-          <option value="pending">Pending</option>
-          <option value="completed">Completed</option>
+          {STATUS_OPTIONS.map((opt) => (
+            <option key={opt} value={opt}>{opt[0].toUpperCase() + opt.slice(1)}</option>
+          ))}
         </select>
       </div>
 

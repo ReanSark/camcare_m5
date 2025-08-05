@@ -1,0 +1,496 @@
+[
+  {
+    "name": "MVP_Patients",
+    "attributes": [
+      {
+        "key": "fullName",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "gender",
+        "type": "enum",
+        "elements": [
+          "Male",
+          "Female",
+          "Other"
+        ],
+        "required": true
+      },
+      {
+        "key": "dob",
+        "type": "date"
+      },
+      {
+        "key": "phone",
+        "type": "string"
+      },
+      {
+        "key": "email",
+        "type": "string"
+      },
+      {
+        "key": "address",
+        "type": "string"
+      },
+      {
+        "key": "other",
+        "type": "string",
+        "size": 1000
+      }
+    ]
+  },
+  {
+    "name": "MVP_Appointments",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "doctorIds",
+        "type": "string[]"
+      },
+      {
+        "key": "date",
+        "type": "datetime",
+        "required": true
+      },
+      {
+        "key": "reason",
+        "type": "string",
+        "size": 1000
+      },
+      {
+        "key": "status",
+        "type": "enum",
+        "elements": [
+          "scheduled",
+          "completed",
+          "canceled"
+        ],
+        "required": true
+      },
+      {
+        "key": "other",
+        "type": "string",
+        "size": 1000
+      }
+    ]
+  },
+  {
+    "name": "MVP_Diagnoses",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "doctorId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "appointmentId",
+        "type": "string"
+      },
+      {
+        "key": "diagnosis",
+        "type": "string",
+        "required": true,
+        "size": 1000
+      },
+      {
+        "key": "date",
+        "type": "datetime",
+        "required": true
+      },
+      {
+        "key": "other",
+        "type": "string",
+        "size": 1000
+      }
+    ]
+  },
+  {
+    "name": "MVP_Invoices",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "items",
+        "type": "string[]"
+      },
+      {
+        "key": "totalAmount",
+        "type": "float"
+      },
+      {
+        "key": "status",
+        "type": "enum",
+        "elements": [
+          "paid",
+          "unpaid",
+          "partial"
+        ]
+      },
+      {
+        "key": "paymentMethod",
+        "type": "enum",
+        "elements": [
+          "cash",
+          "card",
+          "mobile"
+        ]
+      },
+      {
+        "key": "dateIssued",
+        "type": "datetime"
+      },
+      {
+        "key": "other",
+        "type": "string",
+        "size": 1000
+      }
+    ]
+  },
+  {
+    "name": "MVP_Receptionists",
+    "attributes": [
+      {
+        "key": "userId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "fullName",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "role",
+        "type": "enum",
+        "elements": [
+          "Receptionist"
+        ],
+        "required": true
+      },
+      {
+        "key": "other",
+        "type": "string",
+        "size": 1000
+      }
+    ]
+  },
+  {
+    "name": "MVP_Doctors",
+    "attributes": [
+      {
+        "key": "userId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "fullName",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "role",
+        "type": "enum",
+        "elements": [
+          "Doctor"
+        ],
+        "required": true
+      },
+      {
+        "key": "other",
+        "type": "string",
+        "size": 1000
+      }
+    ]
+  },
+  {
+    "name": "MVP_Pharmacists",
+    "attributes": [
+      {
+        "key": "userId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "fullName",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "role",
+        "type": "enum",
+        "elements": [
+          "Pharmacist"
+        ],
+        "required": true
+      },
+      {
+        "key": "other",
+        "type": "string",
+        "size": 1000
+      }
+    ]
+  },
+  {
+    "name": "LabTechnicians",
+    "attributes": [
+      {
+        "key": "userId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "fullName",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "email",
+        "type": "string"
+      },
+      {
+        "key": "phone",
+        "type": "string"
+      },
+      {
+        "key": "photoUrl",
+        "type": "string"
+      },
+      {
+        "key": "department",
+        "type": "string"
+      },
+      {
+        "key": "joinedDate",
+        "type": "datetime"
+      },
+      {
+        "key": "isActive",
+        "type": "boolean",
+        "default": true
+      },
+      {
+        "key": "role",
+        "type": "enum",
+        "elements": [
+          "LabTechnician"
+        ],
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "LabTestCatalog",
+    "attributes": [
+      {
+        "key": "name",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "category",
+        "type": "string"
+      },
+      {
+        "key": "price",
+        "type": "float",
+        "required": true
+      },
+      {
+        "key": "availableInHouse",
+        "type": "boolean",
+        "default": false
+      },
+      {
+        "key": "createdBy",
+        "type": "string"
+      },
+      {
+        "key": "createdAt",
+        "type": "datetime"
+      }
+    ]
+  },
+  {
+    "name": "LabResults",
+    "attributes": [
+      {
+        "key": "patientId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "requestedBy",
+        "type": "string"
+      },
+      {
+        "key": "diagnosisId",
+        "type": "string"
+      },
+      {
+        "key": "testName",
+        "type": "string"
+      },
+      {
+        "key": "results",
+        "type": "text"
+      },
+      {
+        "key": "status",
+        "type": "enum",
+        "elements": [
+          "pending",
+          "processing",
+          "completed",
+          "canceled"
+        ],
+        "required": true
+      },
+      {
+        "key": "labSource",
+        "type": "enum",
+        "elements": [
+          "in-house",
+          "external"
+        ]
+      },
+      {
+        "key": "externalLabName",
+        "type": "string"
+      },
+      {
+        "key": "processedBy",
+        "type": "string"
+      },
+      {
+        "key": "resultFileUrl",
+        "type": "string"
+      },
+      {
+        "key": "date",
+        "type": "datetime"
+      },
+      {
+        "key": "dateRequested",
+        "type": "datetime"
+      },
+      {
+        "key": "dateCompleted",
+        "type": "datetime"
+      },
+      {
+        "key": "printedAt",
+        "type": "datetime"
+      },
+      {
+        "key": "isPrinted",
+        "type": "boolean",
+        "default": false
+      },
+      {
+        "key": "labConsentId",
+        "type": "string"
+      },
+      {
+        "key": "isArchived",
+        "type": "boolean",
+        "default": false
+      },
+      {
+        "key": "createdBy",
+        "type": "string"
+      },
+      {
+        "key": "updatedBy",
+        "type": "string"
+      },
+      {
+        "key": "createdAt",
+        "type": "datetime"
+      },
+      {
+        "key": "updatedAt",
+        "type": "datetime"
+      }
+    ]
+  },
+  {
+    "name": "LabResultDetails",
+    "attributes": [
+      {
+        "key": "labResultId",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "testItem",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "value",
+        "type": "string"
+      },
+      {
+        "key": "unit",
+        "type": "string"
+      },
+      {
+        "key": "referenceRange",
+        "type": "string"
+      },
+      {
+        "key": "flag",
+        "type": "enum",
+        "elements": [
+          "normal",
+          "high",
+          "low",
+          "critical"
+        ]
+      },
+      {
+        "key": "note",
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "name": "LabReports",
+    "attributes": [
+      {
+        "key": "month",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "totalTests",
+        "type": "integer"
+      },
+      {
+        "key": "inHouseCount",
+        "type": "integer"
+      },
+      {
+        "key": "externalCount",
+        "type": "integer"
+      },
+      {
+        "key": "averageCompletionTime",
+        "type": "float"
+      }
+    ]
+  }
+]

@@ -50,13 +50,18 @@ export interface Pharmacist {
   other?: string;
 }
 
-// Lab Technician
+// Lab Technician (v5)
 export interface LabTechnician {
   $id: string;
-  fullName: string;
-  role: "LabTechnician";
   userId: string;
-  other?: string;
+  fullName: string;
+  email?: string;
+  phone?: string;
+  photoUrl?: string;
+  department?: string;
+  joinedDate?: string;
+  isActive?: boolean;
+  role: "LabTechnician";
 }
 
 // Diagnosis
@@ -88,21 +93,49 @@ export interface Invoice {
   other?: string;
 }
 
-// Lab Test Metadata
-export interface LabTestCatalog {
+// Lab Test (LabTestCatalog, v5)
+export interface LabTest {
   $id: string;
   name: string;
-  price: number;
   category?: string;
-  notes?: string;
+  price: number;
+  availableInHouse?: boolean;
+  createdBy?: string;
+  createdAt?: string;
 }
 
-// Lab Result
+// Lab Result (LabResults, v5)
 export interface LabResult {
   $id: string;
   patientId: string;
-  appointmentId?: string;
-  testIds?: string[];
-  status: "pending" | "completed";
-  enteredBy: string;
+  diagnosisId?: string;
+  testName: string;
+  status: "pending" | "processing" | "completed" | "canceled";
+  processedBy: string;
+  labSource?: "in-house" | "external";
+  externalLabName?: string;
+  resultFileUrl?: string;
+  date?: string;
+  dateRequested?: string;
+  dateCompleted?: string;
+  printedAt?: string;
+  isPrinted?: boolean;
+  labConsentId?: string;
+  isArchived?: boolean;
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Lab Result Detail (LabResultDetails, v5)
+export interface LabResultDetail {
+  $id: string;
+  labResultId: string;
+  testItem: string;
+  value?: string;
+  unit?: string;
+  referenceRange?: string;
+  flag?: "normal" | "high" | "low" | "critical";
+  note?: string;
 }

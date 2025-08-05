@@ -9,18 +9,24 @@ import { DATABASE_ID } from '@/lib/appwrite.config';
 import { COLLECTIONS } from '@/lib/collections';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/context/AuthProvider'; // 👈 get current user
 
 export default function AddLabTestPage() {
   const router = useRouter();
+  const { user } = useAuth(); // 👈 get current user
   const [form, setForm] = useState({
     name: '',
     price: '',
     category: '',
-    notes: '',
+    availableInHouse: false, // 👈 new field
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setForm({
+      ...form,
+      [name]: type === 'checkbox' ? checked : value,
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,7 +46,9 @@ export default function AddLabTestPage() {
           name: form.name,
           price: parseFloat(form.price),
           category: form.category,
-          notes: form.notes,
+          availableInHouse: form.availableInHouse,
+          createdBy: user?.id || '', // 👈 from context
+          createdAt: new Date().toISOString(), // optional if Appwrite default set
         }
       );
 
@@ -72,8 +80,15 @@ export default function AddLabTestPage() {
         </div>
 
         <div>
-          <label className="block mb-1">Notes (optional)</label>
-          <Input name="notes" value={form.notes} onChange={handleChange} />
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="availableInHouse"
+              checked={form.availableInHouse}
+              onChange={handleChange}
+            />
+            Available In-House
+          </label>
         </div>
 
         <Button type="submit">Save Test</Button>

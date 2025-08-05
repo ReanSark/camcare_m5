@@ -1,18 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { databases } from '@/lib/appwrite.config';
 import { DATABASE_ID } from '@/lib/appwrite.config';
 import { COLLECTIONS } from '@/lib/collections';
 import { Button } from '@/components/ui/Button';
 import type { Diagnosis, Patient } from '@/types';
 
-export default function LabTechnicianDiagnosesPage() {
+export default function DiagnosesPage() {
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
-  const [patientsMap, setPatientsMap] = useState<Record<string, string>>({});
+  const [patientsMap, setPatientsMap] = useState<Record<string, Patient>>({});
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,36 +22,34 @@ export default function LabTechnicianDiagnosesPage() {
           databases.listDocuments(DATABASE_ID, COLLECTIONS.DIAGNOSES),
           databases.listDocuments(DATABASE_ID, COLLECTIONS.PATIENTS),
         ]);
+        setDiagnoses(
+          diagRes.documents.map((doc) => ({
+            $id: doc.$id,
+            patientId: doc.patientId,
+            doctorId: doc.doctorId,
+            diagnosis: doc.diagnosis,
+            date: doc.date,
+            appointmentId: doc.appointmentId, // if present
+            other: doc.other,                 // if present
+          }))
+        );
 
-        const diagnoses = diagRes.documents.map((doc): Diagnosis => ({
+        const pMap: Record<string, Patient> = {};
+        patRes.documents.forEach((doc) => {
+        pMap[doc.$id] = {
           $id: doc.$id,
-          patientId: doc.patientId,
-          doctorId: doc.doctorId,
-          appointmentId: doc.appointmentId,
-          diagnosis: doc.diagnosis,
-          date: doc.date,
-          other: doc.other,
-        }));
-
-        const patients = patRes.documents.map((doc): Patient => ({
-          $id: doc.$id,
-          fullName: doc.fullName,
-          gender: doc.gender,
+          fullName: doc.fullName ?? '',
+          gender: doc.gender ?? 'Other',
           dob: doc.dob,
           phone: doc.phone,
           email: doc.email,
           address: doc.address,
           other: doc.other,
-        }));
-
-        const map: Record<string, string> = {};
-        patients.forEach((p) => (map[p.$id] = p.fullName));
-
-        setDiagnoses(diagnoses);
-        setPatientsMap(map);
+        };
+      });
+        setPatientsMap(pMap);
       } catch (err) {
-        console.error('Failed to load lab diagnoses:', err);
-        toast.error('Failed to load diagnoses');
+        toast.error('Failed to load data');
       } finally {
         setLoading(false);
       }
@@ -59,13 +58,35 @@ export default function LabTechnicianDiagnosesPage() {
     fetchData();
   }, []);
 
+  // TODO: Once 'requestLaboratory' is added to Diagnosis schema,
+  // filter like: diagnoses.filter(d => d.requestLaboratory === true)
+  let filtered = diagnoses;
+  if (search.trim()) {
+    const s = search.toLowerCase();
+    filtered = diagnoses.filter(
+      (d) =>
+        (patientsMap[d.patientId]?.fullName?.toLowerCase().includes(s) ?? false) ||
+        d.diagnosis.toLowerCase().includes(s) ||
+        d.date?.toLowerCase().includes(s)
+    );
+  }
+
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Lab Diagnoses</h1>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
+        <h1 className="text-2xl font-bold">Diagnoses</h1>
+        <input
+          type="text"
+          className="border rounded p-2"
+          placeholder="Search by patient, diagnosis, date"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
       {loading ? (
         <p>Loading...</p>
-      ) : diagnoses.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <p>No diagnoses found.</p>
       ) : (
         <div className="overflow-x-auto">
@@ -73,26 +94,33 @@ export default function LabTechnicianDiagnosesPage() {
             <thead className="bg-gray-100">
               <tr>
                 <th className="text-left p-2 border">Patient</th>
+                <th className="text-left p-2 border">Gender</th>
                 <th className="text-left p-2 border">Date</th>
                 <th className="text-left p-2 border">Diagnosis</th>
                 <th className="text-left p-2 border">Action</th>
               </tr>
             </thead>
             <tbody>
-              {diagnoses.map((d) => (
+              {filtered.map((d) => (
                 <tr key={d.$id} className="border-t">
-                  <td className="p-2 border">{patientsMap[d.patientId] ?? '-'}</td>
                   <td className="p-2 border">
-                    {d.date ? new Date(d.date).toLocaleDateString() : '-'}
+                    {patientsMap[d.patientId]
+                      ? `${patientsMap[d.patientId].fullName} (${d.patientId})`
+                      : d.patientId}
                   </td>
-                  <td className="p-2 border whitespace-pre-wrap">{d.diagnosis}</td>
+                  <td className="p-2 border">
+                    {patientsMap[d.patientId]?.gender ?? '-'}
+                  </td>
+                  <td className="p-2 border">{d.date}</td>
+                  <td className="p-2 border">{d.diagnosis}</td>
                   <td className="p-2 border">
                     <Link
-                      href={`/dashboard/labtechnician/labresults/new?patientId=${d.patientId}&diagnosisId=${d.$id}`}
+                      href={{
+                        pathname: '/dashboard/labtechnician/labresults/new',
+                        query: { patientId: d.patientId, diagnosisId: d.$id },
+                      }}
                     >
-                      <Button variant="outline" className="text-sm px-3 py-2 h-auto">
-                        Log Result
-                      </Button>
+                      <Button>Log Result</Button>
                     </Link>
                   </td>
                 </tr>

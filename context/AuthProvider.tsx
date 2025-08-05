@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         mvp_receptionists: COLLECTIONS.RECEPTIONISTS,
         mvp_doctors: COLLECTIONS.DOCTORS,
         mvp_pharmacists: COLLECTIONS.PHARMACISTS,
-        mvp_labTechnicians: COLLECTIONS.LABTECHNICIANS,
+        labTechnicians: COLLECTIONS.LABTECHNICIANS,
       });
 
       // 🌀 Search for user in role collections

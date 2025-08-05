@@ -70,6 +70,11 @@ export default function LabTechnicianDashboard() {
         <Link href="/dashboard/labtechnician/labtests">
           <Button>📚 Test Catalog</Button>
         </Link>
+        {/* Optional future analytics button:
+        <Link href="/dashboard/labtechnician/reports">
+          <Button>📈 Lab Reports</Button>
+        </Link>
+        */}
       </div>
     </div>
   );
