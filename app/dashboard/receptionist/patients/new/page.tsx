@@ -11,10 +11,13 @@ import { DATABASE_ID } from '@/lib/appwrite.config';
 import { COLLECTIONS } from '@/lib/collections';
 import { ID } from 'appwrite';
 import type { Patient } from '@/types';
+import { useAuth } from '@/context/AuthProvider'; // get current user
 
 export default function NewPatientPage() {
   const router = useRouter();
+  const { user } = useAuth(); // get logged-in user
 
+  // Full upgraded Patient fields
   const [form, setForm] = useState<Omit<Patient, '$id'>>({
     fullName: '',
     gender: 'Male',
@@ -22,12 +25,31 @@ export default function NewPatientPage() {
     phone: '',
     email: '',
     address: '',
+    bloodType: undefined,
+    emergencyContact: '',
+    medicalHistory: '',
     other: '',
+    isArchived: false,
+    createdBy: user?.id || '',
+    createdAt: new Date().toISOString(),
+    updatedBy: user?.id || '',
+    updatedAt: new Date().toISOString(),
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const { name, value } = e.target;
+  if (name === "bloodType") {
+    setForm((prev) => ({
+      ...prev,
+      bloodType: value === '' ? undefined : (value as Patient['bloodType']),
+    }));
+  } else {
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +59,13 @@ export default function NewPatientPage() {
         DATABASE_ID,
         COLLECTIONS.PATIENTS,
         ID.unique(),
-        form
+        {
+          ...form,
+          createdBy: user?.id || '',
+          createdAt: new Date().toISOString(),
+          updatedBy: user?.id || '',
+          updatedAt: new Date().toISOString(),
+        }
       );
 
       toast.success('Patient registered');
@@ -74,6 +102,37 @@ export default function NewPatientPage() {
         <div>
           <Label htmlFor="dob">Date of Birth</Label>
           <Input name="dob" type="date" value={form.dob} onChange={handleChange} />
+        </div>
+
+        <div>
+          <Label htmlFor="bloodType">Blood Type</Label>
+          <select
+            name="bloodType"
+            value={form.bloodType || ''}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                bloodType: e.target.value === '' ? undefined : (e.target.value as Patient['bloodType']),
+              }))
+            }
+            className="w-full p-2 rounded border"
+          >
+            <option value="">-- Select --</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="AB">AB</option>
+            <option value="O">O</option>
+          </select>
+        </div>
+
+        <div>
+          <Label htmlFor="emergencyContact">Emergency Contact</Label>
+          <Input name="emergencyContact" value={form.emergencyContact} onChange={handleChange} />
+        </div>
+
+        <div>
+          <Label htmlFor="medicalHistory">Medical History</Label>
+          <Input name="medicalHistory" value={form.medicalHistory} onChange={handleChange} />
         </div>
 
         <div>

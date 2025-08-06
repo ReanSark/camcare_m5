@@ -2,13 +2,21 @@
 
 // Patient
 export interface Patient {
-  $id: string;
+  $id: string; // Appwrite Document ID
   fullName: string;
   gender: "Male" | "Female" | "Other";
-  dob?: string;
+  dob?: string; // ISO date string, optional
   phone?: string;
   email?: string;
   address?: string;
+  bloodType?: "A" | "B" | "AB" | "O";
+  emergencyContact?: string;
+  medicalHistory?: string;
+  isArchived?: boolean;
+  createdBy?: string;
+  createdAt?: string; // ISO datetime
+  updatedBy?: string;
+  updatedAt?: string;
   other?: string;
 }
 
