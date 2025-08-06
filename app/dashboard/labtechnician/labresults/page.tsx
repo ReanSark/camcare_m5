@@ -13,25 +13,31 @@ type SortKey = 'patient' | 'diagnosis' | 'testName' | 'status' | 'labSource' | '
 type SortOrder = 'asc' | 'desc';
 
 export default function LabResultsPage() {
+  // Holds all lab results (fetched from Appwrite)
   const [results, setResults] = useState<LabResult[]>([]);
+  // Maps patientId -> patient name for fast lookup in table
   const [patientsMap, setPatientsMap] = useState<Record<string, string>>({});
+  // Loading state
   const [loading, setLoading] = useState(true);
 
-  // Filter/Search/Sort states
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [labSourceFilter, setLabSourceFilter] = useState<string>('');
-  const [search, setSearch] = useState<string>('');
-  const [sortKey, setSortKey] = useState<SortKey>('createdAt');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  // Filter and sort states for table controls
+  const [statusFilter, setStatusFilter] = useState<string>(''); // e.g., "pending"
+  const [labSourceFilter, setLabSourceFilter] = useState<string>(''); // e.g., "in-house"
+  const [search, setSearch] = useState<string>(''); // Free text search
+  const [sortKey, setSortKey] = useState<SortKey>('createdAt'); // Which column to sort by
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc'); // Asc/desc
 
+  // On first render: fetch lab results and patients
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch lab results and patients in parallel
         const [resRes, patRes] = await Promise.all([
           databases.listDocuments(DATABASE_ID, COLLECTIONS.LABRESULTS),
           databases.listDocuments(DATABASE_ID, COLLECTIONS.PATIENTS),
         ]);
 
+        // Map lab results to strong types, with defaults
         const results = resRes.documents.map((doc): LabResult => ({
           $id: doc.$id,
           patientId: doc.patientId,
@@ -43,12 +49,14 @@ export default function LabResultsPage() {
           createdAt: doc.createdAt,
         }));
 
+        // Map patients to type (min fields needed here)
         const patients = patRes.documents.map((doc): Patient => ({
           $id: doc.$id,
           fullName: doc.fullName,
           gender: doc.gender,
         }));
 
+        // Build a quick lookup map: patientId -> full name
         const pMap: Record<string, string> = {};
         patients.forEach((p) => (pMap[p.$id] = p.fullName));
 
@@ -65,7 +73,7 @@ export default function LabResultsPage() {
     fetchData();
   }, []);
 
-  // Handle Sorting
+  // Handle sorting when clicking on a table header
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -75,14 +83,17 @@ export default function LabResultsPage() {
     }
   };
 
-  // Filtering and searching
+  // Apply filters and search to results
   let filteredResults = results;
+  // Filter by status if selected
   if (statusFilter) {
     filteredResults = filteredResults.filter((r) => r.status === statusFilter);
   }
+  // Filter by lab source if selected
   if (labSourceFilter) {
     filteredResults = filteredResults.filter((r) => (r.labSource || '') === labSourceFilter);
   }
+  // Free-text search by patient name or test name
   if (search.trim()) {
     const s = search.toLowerCase();
     filteredResults = filteredResults.filter(
@@ -92,11 +103,12 @@ export default function LabResultsPage() {
     );
   }
 
-  // Sorting
+  // Sort results according to UI controls
   const sortedResults = [...filteredResults].sort((a, b) => {
     let aVal: string | number | undefined;
     let bVal: string | number | undefined;
 
+    // Compare different keys according to chosen column
     switch (sortKey) {
       case 'patient':
         aVal = patientsMap[a.patientId] || '';
@@ -135,11 +147,13 @@ export default function LabResultsPage() {
     return 0;
   });
 
-  // Delete handler
+  // Handle delete action for a lab result
   const handleDelete = async ($id: string) => {
     if (!window.confirm('Delete this lab result?')) return;
     try {
+      // Delete from Appwrite
       await databases.deleteDocument(DATABASE_ID, COLLECTIONS.LABRESULTS, $id);
+      // Remove from local state for instant feedback
       setResults((prev) => prev.filter((r) => r.$id !== $id));
       toast.success('Lab result deleted');
     } catch (err) {
@@ -147,6 +161,7 @@ export default function LabResultsPage() {
       toast.error('Failed to delete lab result');
     }
   };
+
 
   return (
     <div className="p-6">

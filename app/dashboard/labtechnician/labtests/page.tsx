@@ -12,17 +12,24 @@ type SortKey = 'name' | 'price' | 'category';
 type SortOrder = 'asc' | 'desc';
 
 export default function LabTestCatalogPage() {
+  // State for the table of tests (array of LabTest)
   const [tests, setTests] = useState<LabTest[]>([]);
+  // Loading spinner state
   const [loading, setLoading] = useState(true);
+  // Sorting state: which column and order
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  // Filters: by category and availableInHouse
   const [filterCategory, setFilterCategory] = useState('');
   const [filterInHouse, setFilterInHouse] = useState<'all' | 'yes' | 'no'>('all');
 
+  // On first render, load all lab tests from Appwrite
   useEffect(() => {
     const fetchTests = async () => {
       try {
+        // Fetch all documents from the LabTestCatalog collection
         const res = await databases.listDocuments(DATABASE_ID, COLLECTIONS.LABTESTCATALOG);
+        // Map each document to the LabTest type (ensures type safety)
         const docs = res.documents.map((doc): LabTest => ({
           $id: doc.$id,
           name: doc.name,
@@ -32,56 +39,66 @@ export default function LabTestCatalogPage() {
           createdBy: doc.createdBy,
           createdAt: doc.createdAt,
         }));
-        setTests(docs);
+        setTests(docs); // Update state with fetched tests
       } catch (err) {
+        // If fetching fails, show error notification
         console.error('Failed to load lab tests:', err);
         toast.error('Failed to load lab tests');
       } finally {
-        setLoading(false);
+        setLoading(false); // Always clear loading state
       }
     };
 
     fetchTests();
   }, []);
 
-  // Unique categories for filter dropdown
+  // Collect all unique non-empty categories for the filter dropdown
   const categories = Array.from(new Set(tests.map((t) => t.category).filter(Boolean)));
 
-  // Filter and sort data
+  // Filtering and sorting logic, recalculated each render
   let filteredTests = tests;
+  // Filter by category (if any)
   if (filterCategory) {
     filteredTests = filteredTests.filter((t) => t.category === filterCategory);
   }
+  // Filter by availability (if not 'all')
   if (filterInHouse !== 'all') {
     filteredTests = filteredTests.filter((t) =>
       filterInHouse === 'yes' ? t.availableInHouse : !t.availableInHouse
     );
   }
+  // Sort by selected column and order
   const sortedTests = [...filteredTests].sort((a, b) => {
     let compare = 0;
     if (sortKey === 'price') {
+      // Sort numerically if by price
       compare = (a.price || 0) - (b.price || 0);
     } else {
+      // Sort alphabetically for name/category
       compare = String(a[sortKey] || '').localeCompare(String(b[sortKey] || ''));
     }
     return sortOrder === 'asc' ? compare : -compare;
   });
 
-  // Handle sorting toggle
+  // Called when clicking a column header to change sorting
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
+      // Toggle order if clicking same column
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
+      // Switch to a new column, default to ascending
       setSortKey(key);
       setSortOrder('asc');
     }
   };
 
-  // Delete action
+  // Called when user clicks "Delete" on a row
   const handleDelete = async ($id: string) => {
     if (!window.confirm('Are you sure you want to delete this lab test?')) return;
     try {
+      // Remove document from Appwrite
       await databases.deleteDocument(DATABASE_ID, COLLECTIONS.LABTESTCATALOG, $id);
+      // Remove from UI immediately (optimistic update)
       setTests((prev) => prev.filter((t) => t.$id !== $id));
       toast.success('Lab test deleted');
     } catch (err) {
