@@ -24,10 +24,11 @@ export interface Patient {
 export interface Appointment {
   $id: string;
   patientId: string;
-  doctorIds: string[];
-  date: string;
+  doctorIds?: string[];
+  nurseIds?: string[];
+  date: string; // ISO string
   reason?: string;
-  status: "scheduled" | "completed" | "canceled";
+  status: "scheduled" | "arrived" | "completed" | "canceled";
   other?: string;
 }
 
@@ -39,6 +40,21 @@ export interface Doctor {
   userId: string;
   other?: string;
 }
+
+export interface Nurse {
+  $id: string;          // Appwrite Document ID
+  userId: string;       // Linked user account
+  fullName: string;
+  role: "Nurse";
+  email?: string;
+  phone?: string;
+  photoUrl?: string;
+  department?: string;
+  joinedDate?: string;  // ISO datetime
+  isActive?: boolean;
+  other?: string;       // For notes/extension
+}
+
 
 // Receptionist
 export interface Receptionist {

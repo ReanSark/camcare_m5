@@ -1,27 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { databases } from '@/lib/appwrite.config';
-import { DATABASE_ID, } from '@/lib/appwrite.config';
+import { DATABASE_ID } from '@/lib/appwrite.config';
 import { COLLECTIONS } from '@/lib/collections';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
-import { ID } from 'appwrite';
 import type { Appointment, Patient, Doctor, Nurse } from '@/types';
 
-export default function NewAppointmentPage() {
+export default function EditAppointmentPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id as string;
 
-  // Reference data for dropdowns
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [nurses, setNurses] = useState<Nurse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  // Form state
   const [form, setForm] = useState<Omit<Appointment, '$id'>>({
     patientId: '',
     doctorIds: [],
@@ -32,122 +32,128 @@ export default function NewAppointmentPage() {
     other: '',
   });
 
-  // Load reference data for dropdowns
   useEffect(() => {
-    const fetchRefs = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const [patRes, docRes, nurseRes] = await Promise.all([
+        const [app, patRes, docRes, nurseRes] = await Promise.all([
+          databases.getDocument(DATABASE_ID, COLLECTIONS.APPOINTMENTS, id),
           databases.listDocuments(DATABASE_ID, COLLECTIONS.PATIENTS),
           databases.listDocuments(DATABASE_ID, COLLECTIONS.DOCTORS),
           databases.listDocuments(DATABASE_ID, COLLECTIONS.NURSES),
         ]);
 
-        const patientsList = patRes.documents.map((doc) => ({
-          $id: doc.$id,
-          fullName: doc.fullName,
-          gender: doc.gender,
-          dob: doc.dob,
-          phone: doc.phone,
-          email: doc.email,
-          address: doc.address,
-          bloodType: doc.bloodType,
-          emergencyContact: doc.emergencyContact,
-          medicalHistory: doc.medicalHistory,
-          isArchived: doc.isArchived,
-          createdBy: doc.createdBy,
-          createdAt: doc.createdAt,
-          updatedBy: doc.updatedBy,
-          updatedAt: doc.updatedAt,
-          other: doc.other,
-        }));
-        setPatients(patientsList);
+        setForm({
+          patientId: app.patientId ?? '',
+          doctorIds: app.doctorIds ?? [],
+          nurseIds: app.nurseIds ?? [],
+          date: app.date ?? '',
+          reason: app.reason ?? '',
+          status: app.status ?? 'scheduled',
+          other: app.other ?? '',
+        });
 
-        const doctorsList = docRes.documents.map((doc) => ({
-          $id: doc.$id,
-          userId: doc.userId,
-          fullName: doc.fullName,
-          role: doc.role,
-          email: doc.email,
-          phone: doc.phone,
-          photoUrl: doc.photoUrl,
-          department: doc.department,
-          joinedDate: doc.joinedDate,
-          isActive: doc.isActive,
-          other: doc.other,
-        }));
-        setDoctors(doctorsList);
-
-        const nursesList = nurseRes.documents.map((doc) => ({
-          $id: doc.$id,
-          userId: doc.userId,
-          fullName: doc.fullName,
-          role: doc.role,
-          email: doc.email,
-          phone: doc.phone,
-          photoUrl: doc.photoUrl,
-          department: doc.department,
-          joinedDate: doc.joinedDate,
-          isActive: doc.isActive,
-          other: doc.other,
-        }));
-        setNurses(nursesList);
-
+        setPatients(
+          patRes.documents.map((doc) => ({
+            $id: doc.$id,
+            fullName: doc.fullName,
+            gender: doc.gender,
+            dob: doc.dob,
+            phone: doc.phone,
+            email: doc.email,
+            address: doc.address,
+            bloodType: doc.bloodType,
+            emergencyContact: doc.emergencyContact,
+            medicalHistory: doc.medicalHistory,
+            isArchived: doc.isArchived,
+            createdBy: doc.createdBy,
+            createdAt: doc.createdAt,
+            updatedBy: doc.updatedBy,
+            updatedAt: doc.updatedAt,
+            other: doc.other,
+          }))
+        );
+        setDoctors(
+          docRes.documents.map((doc) => ({
+            $id: doc.$id,
+            userId: doc.userId,
+            fullName: doc.fullName,
+            role: doc.role,
+            email: doc.email,
+            phone: doc.phone,
+            photoUrl: doc.photoUrl,
+            department: doc.department,
+            joinedDate: doc.joinedDate,
+            isActive: doc.isActive,
+            other: doc.other,
+          }))
+        );
+        setNurses(
+          nurseRes.documents.map((doc) => ({
+            $id: doc.$id,
+            userId: doc.userId,
+            fullName: doc.fullName,
+            role: doc.role,
+            email: doc.email,
+            phone: doc.phone,
+            photoUrl: doc.photoUrl,
+            department: doc.department,
+            joinedDate: doc.joinedDate,
+            isActive: doc.isActive,
+            other: doc.other,
+          }))
+        );
       } catch {
-        toast.error('Failed to load reference data');
+        toast.error('Failed to load appointment or reference data');
+        router.back();
       } finally {
         setLoading(false);
       }
     };
-    fetchRefs();
-  }, []);
+    if (id) fetchData();
+  }, [id, router]);
 
-  // Form event handlers
+  // Type-safe multi-select handler
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-  const { name, type, value, multiple, options } = e.target as HTMLSelectElement;
-  if (type === "select-multiple") {
-    const selectedValues = Array.from(options)
-      .filter((o) => o.selected)
-      .map((o) => o.value);
-    setForm((prev) => ({
-      ...prev,
-      [name]: selectedValues,
-    }));
-  } else {
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }
-};
-
+    const { name, value, type, options } = e.target as HTMLSelectElement;
+    if (type === "select-multiple") {
+      const selectedValues = Array.from(options)
+        .filter((o) => o.selected)
+        .map((o) => o.value);
+      setForm((prev) => ({
+        ...prev,
+        [name]: selectedValues,
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!form.patientId || !Array.isArray(form.doctorIds) || form.doctorIds.length === 0 || !form.date) {
-      toast.error('Patient, doctor, and date are required');
-      return;
-    }
-
-
+    setSaving(true);
     try {
-      await databases.createDocument(
+      await databases.updateDocument(
         DATABASE_ID,
         COLLECTIONS.APPOINTMENTS,
-        ID.unique(),
+        id,
         form
       );
-      toast.success('Appointment created');
-      router.push('/dashboard/receptionist/appointments');
-    } catch (err) {
-      toast.error('Failed to create appointment');
+      toast.success('Appointment updated');
+      router.push('/dashboard/receptionist/appointments/view/' + id);
+    } catch {
+      toast.error('Failed to update appointment');
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
     <div className="max-w-xl mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">New Appointment</h1>
+      <h1 className="text-2xl font-bold mb-6">Edit Appointment</h1>
       {loading ? (
         <p>Loading...</p>
       ) : (
@@ -172,7 +178,7 @@ export default function NewAppointmentPage() {
             <select
               name="doctorIds"
               multiple
-              value={form.doctorIds}
+              value={form.doctorIds ?? []}
               onChange={handleChange}
               className="w-full p-2 rounded border"
               required
@@ -190,7 +196,7 @@ export default function NewAppointmentPage() {
             <select
               name="nurseIds"
               multiple
-              value={form.nurseIds}
+              value={form.nurseIds ?? []}
               onChange={handleChange}
               className="w-full p-2 rounded border"
             >
@@ -216,7 +222,7 @@ export default function NewAppointmentPage() {
             <Label htmlFor="reason">Reason</Label>
             <Input
               name="reason"
-              value={form.reason}
+              value={form.reason ?? ''}
               onChange={handleChange}
               placeholder="Optional (max 1000 chars)"
               maxLength={1000}
@@ -241,13 +247,15 @@ export default function NewAppointmentPage() {
             <Label htmlFor="other">Other</Label>
             <Input
               name="other"
-              value={form.other}
+              value={form.other ?? ''}
               onChange={handleChange}
               placeholder="Optional notes"
               maxLength={1000}
             />
           </div>
-          <Button type="submit" className="w-full">Create Appointment</Button>
+          <Button type="submit" className="w-full" disabled={saving}>
+            {saving ? 'Saving...' : 'Save Changes'}
+          </Button>
         </form>
       )}
     </div>
