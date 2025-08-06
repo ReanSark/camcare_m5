@@ -99,23 +99,46 @@ export interface Diagnosis {
   other?: string;
 }
 
-// Invoice Item (free-text based, MVP)
-export interface InvoiceItem {
-  description: string;
-  amount: number;
-}
+export type InvoiceStatus = "paid" | "unpaid" | "partial";
+export type PaymentMethod = "cash" | "card" | "mobile" | "insurance";
+export type InvoiceSource = "appointment" | "admission" | "manual";
+export type DiscountType = "manual" | "staff" | "disability" | "promotion" | "insurance";
+export type InvoiceItemType = "lab" | "service" | "pharmacy" | "manual";
 
-// Invoice
 export interface Invoice {
   $id: string;
   patientId: string;
-  items: string[]; // Each string can be enhanced to InvoiceItem[] in future
+  groupInvoiceId?: string;
   totalAmount: number;
-  status: "paid" | "unpaid" | "partial";
-  paymentMethod: "cash" | "card" | "mobile";
-  dateIssued: string;
-  other?: string;
+  discount?: number;
+  discountType?: DiscountType;
+  discountNote?: string;
+  status: InvoiceStatus;
+  paymentMethod?: PaymentMethod;
+  paidAt?: string;
+  paidBy?: string;
+  source?: InvoiceSource;
+  note?: string;
+  isArchived?: boolean;
+  updatedBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
+
+export interface InvoiceItem {
+  $id: string;
+  invoiceId: string;
+  type: InvoiceItemType;
+  refId?: string;
+  name: string;
+  price: number;
+  unit: number;
+  discount?: number;
+  discountType?: DiscountType;
+  discountNote?: string;
+  subtotal: number;
+}
+
 
 // Lab Test (LabTestCatalog, v5)
 export interface LabTest {

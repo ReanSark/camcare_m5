@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { ID } from 'appwrite';
 import { databases } from '@/lib/appwrite.config';
 import { DATABASE_ID } from '@/lib/appwrite.config';
 import { COLLECTIONS } from '@/lib/collections';
-import { ID } from 'appwrite';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
@@ -24,15 +24,18 @@ const emptyItem: Omit<InvoiceItem, "$id" | "invoiceId"> = {
   subtotal: 0,
 };
 
-export default function NewInvoicePage() {
+export default function EditInvoicePage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id as string;
+
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Invoice state
-  const [form, setForm] = useState<Omit<Invoice, "$id" | "totalAmount">>({
+  const [form, setForm] = useState<Omit<Invoice, "$id">>({
     patientId: "",
     groupInvoiceId: "",
+    totalAmount: 0,
     discount: 0,
     discountType: "manual",
     discountNote: "",
@@ -41,39 +44,70 @@ export default function NewInvoicePage() {
     note: "",
     isArchived: false,
   });
-
-  // Invoice items (not yet saved to DB)
-  const [items, setItems] = useState<Omit<InvoiceItem, "$id" | "invoiceId">[]>([
-    { ...emptyItem }
-  ]);
+  const [items, setItems] = useState<Omit<InvoiceItem, "$id" | "invoiceId">[]>([]);
 
   useEffect(() => {
-    const fetchPatients = async () => {
+    const fetchAll = async () => {
       setLoading(true);
       try {
-        const res = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PATIENTS);
-        setPatients(res.documents.map((doc) => ({
+        // Load invoice, items, and patients in parallel
+        const [invDoc, itemsRes, patRes] = await Promise.all([
+          databases.getDocument(DATABASE_ID, COLLECTIONS.INVOICES, id),
+          databases.listDocuments(DATABASE_ID, COLLECTIONS.INVOICE_ITEMS, [ // filter: invoiceId == id
+            `invoiceId=${id}`
+          ]),
+          databases.listDocuments(DATABASE_ID, COLLECTIONS.PATIENTS),
+        ]);
+        setForm({
+          patientId: invDoc.patientId,
+          groupInvoiceId: invDoc.groupInvoiceId,
+          totalAmount: invDoc.totalAmount,
+          discount: invDoc.discount,
+          discountType: invDoc.discountType,
+          discountNote: invDoc.discountNote,
+          status: invDoc.status,
+          paymentMethod: invDoc.paymentMethod,
+          note: invDoc.note,
+          isArchived: invDoc.isArchived,
+        });
+        setItems(
+          itemsRes.documents.map((doc) => ({
+            type: doc.type,
+            refId: doc.refId,
+            name: doc.name,
+            price: doc.price,
+            unit: doc.unit,
+            discount: doc.discount,
+            discountType: doc.discountType,
+            discountNote: doc.discountNote,
+            subtotal: doc.subtotal,
+          }))
+        );
+        setPatients(patRes.documents.map((doc) => ({
           $id: doc.$id,
           fullName: doc.fullName,
         } as Patient)));
       } catch {
-        toast.error('Failed to load patients');
+        toast.error('Failed to load invoice data');
+        router.back();
       } finally {
         setLoading(false);
       }
     };
-    fetchPatients();
-  }, []);
+    if (id) fetchAll();
+  }, [id, router]);
 
-  // All subtotal and total calculation are now derived only, never set state in useEffect!
-  const calculatedItems = items.map(item => ({
-    ...item,
-    subtotal: Math.max((item.price * item.unit) - (item.discount || 0), 0)
-  }));
-  const invoiceSubtotal = calculatedItems.reduce((sum, i) => sum + i.subtotal, 0);
-  const invoiceTotal = Math.max(invoiceSubtotal - (form.discount || 0), 0);
+// Compute item subtotals and invoice total ONLY as variables
+const calculatedItems = items.map(item => ({
+  ...item,
+  subtotal: Math.max((item.price * item.unit) - (item.discount || 0), 0)
+}));
+const invoiceSubtotal = calculatedItems.reduce((sum, i) => sum + i.subtotal, 0);
+const invoiceTotal = Math.max(invoiceSubtotal - (form.discount || 0), 0);
 
-  // Handlers for invoice fields
+// Use calculatedItems and invoiceTotal in your table/summary display.
+
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -103,38 +137,39 @@ export default function NewInvoicePage() {
       return;
     }
     try {
-      // 1. Create Invoice (compute total just before save)
-      const invoiceRes = await databases.createDocument(
-        DATABASE_ID,
-        COLLECTIONS.INVOICES,
-        ID.unique(),
-        {
-          ...form,
-          totalAmount: invoiceTotal,
-        }
-      );
-      // 2. Create all InvoiceItems with calculated subtotals
-      for (const item of calculatedItems) {
-        await databases.createDocument(
-          DATABASE_ID,
-          COLLECTIONS.INVOICE_ITEMS,
-          ID.unique(),
-          {
-            ...item,
-            invoiceId: invoiceRes.$id,
-          }
-        );
+// 1. Update Invoice (compute total just before save)
+    await databases.updateDocument(
+      DATABASE_ID,
+      COLLECTIONS.INVOICES,
+      id,
+      {
+        ...form,
+        totalAmount: invoiceTotal,
       }
-      toast.success('Invoice created');
-      router.push('/dashboard/receptionist/invoices');
+    );
+      // 2. Overwrite InvoiceItems: Delete all then re-create for simplicity
+      const itemsRes = await databases.listDocuments(DATABASE_ID, COLLECTIONS.INVOICE_ITEMS, [`invoiceId=${id}`]);
+      await Promise.all(
+        itemsRes.documents.map((doc) =>
+          databases.deleteDocument(DATABASE_ID, COLLECTIONS.INVOICE_ITEMS, doc.$id)
+        )
+      );
+      for (const item of calculatedItems) {
+        await databases.createDocument(DATABASE_ID, COLLECTIONS.INVOICE_ITEMS, ID.unique(), {
+        ...item,
+        invoiceId: id,
+        });
+      }
+      toast.success('Invoice updated');
+      router.push('/dashboard/receptionist/invoices/view/' + id);
     } catch (err) {
-      toast.error('Failed to create invoice');
+      toast.error('Failed to update invoice');
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">New Invoice</h1>
+      <h1 className="text-2xl font-bold mb-6">Edit Invoice</h1>
       {loading ? (
         <p>Loading...</p>
       ) : (
@@ -242,7 +277,7 @@ export default function NewInvoicePage() {
                       <Input type="number" min={0} value={item.discount} onChange={e => handleItemChange(idx, 'discount', e.target.value)} />
                     </td>
                     <td className="p-1 border font-semibold">
-                      ${calculatedItems[idx].subtotal.toFixed(2)}
+                      ${item.subtotal.toFixed(2)}
                     </td>
                     <td className="p-1 border">
                       <Button variant="destructive" onClick={() => removeItem(idx)} disabled={items.length === 1}>
@@ -257,9 +292,9 @@ export default function NewInvoicePage() {
           </div>
           {/* Totals */}
           <div className="text-right text-lg font-bold">
-            Total: ${invoiceTotal.toFixed(2)}
+            Total: ${form.totalAmount.toFixed(2)}
           </div>
-          <Button type="submit" className="w-full mt-4">Create Invoice</Button>
+          <Button type="submit" className="w-full mt-4">Save Changes</Button>
         </form>
       )}
     </div>

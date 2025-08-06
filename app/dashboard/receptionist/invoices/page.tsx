@@ -1,124 +1,124 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { databases } from '@/lib/appwrite.config';
 import { DATABASE_ID } from '@/lib/appwrite.config';
 import { COLLECTIONS } from '@/lib/collections';
 import { Button } from '@/components/ui/Button';
-import type { Patient, Invoice } from '@/types';
+import type { Invoice, Patient } from '@/types';
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [patientsMap, setPatientsMap] = useState<Record<string, string>>({});
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
-  const printRef = useRef<HTMLDivElement>(null); // ✅ for print isolation
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAll = async () => {
+      setLoading(true);
       try {
         const [invRes, patRes] = await Promise.all([
           databases.listDocuments(DATABASE_ID, COLLECTIONS.INVOICES),
           databases.listDocuments(DATABASE_ID, COLLECTIONS.PATIENTS),
         ]);
-
-        const invoices = invRes.documents.map((doc): Invoice => ({
+        setInvoices(invRes.documents.map((doc) => ({
           $id: doc.$id,
           patientId: doc.patientId,
-          items: doc.items ?? [],
-          totalAmount: doc.totalAmount ?? 0,
-          status: doc.status ?? 'unpaid',
-          paymentMethod: doc.paymentMethod ?? 'cash',
-          dateIssued: doc.dateIssued ?? '',
-          other: doc.other,
-        }));
-
-        const patients = patRes.documents.map((doc): Patient => ({
+          groupInvoiceId: doc.groupInvoiceId,
+          totalAmount: doc.totalAmount,
+          discount: doc.discount,
+          discountType: doc.discountType,
+          discountNote: doc.discountNote,
+          status: doc.status,
+          paymentMethod: doc.paymentMethod,
+          paidAt: doc.paidAt,
+          paidBy: doc.paidBy,
+          source: doc.source,
+          note: doc.note,
+          isArchived: doc.isArchived,
+          updatedBy: doc.updatedBy,
+          createdAt: doc.createdAt,
+          updatedAt: doc.updatedAt,
+        })));
+        setPatients(patRes.documents.map((doc) => ({
           $id: doc.$id,
           fullName: doc.fullName,
-          gender: doc.gender,
-          dob: doc.dob,
-          phone: doc.phone,
-          email: doc.email,
-          address: doc.address,
-          other: doc.other,
-        }));
-
-        const patientMap: Record<string, string> = {};
-        patients.forEach((p) => {
-          patientMap[p.$id] = p.fullName;
-        });
-
-        setInvoices(invoices);
-        setPatientsMap(patientMap);
-      } catch (err) {
-        console.error('Failed to load invoices:', err);
-        toast.error('Failed to load invoices');
+        } as Patient)));
+      } catch {
+        toast.error('Failed to load invoices or patients');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchData();
+    fetchAll();
   }, []);
 
-  const handlePrint = () => {
-    if (printRef.current) {
-      window.print();
+  const patientMap = Object.fromEntries(patients.map((p) => [p.$id, p.fullName]));
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Delete this invoice?')) return;
+    try {
+      await databases.deleteDocument(DATABASE_ID, COLLECTIONS.INVOICES, id);
+      setInvoices((prev) => prev.filter((inv) => inv.$id !== id));
+      toast.success('Invoice deleted');
+    } catch {
+      toast.error('Failed to delete invoice');
     }
   };
 
   return (
     <div className="p-6">
-      {/* ✅ Actions: new + print */}
-      <div className="flex justify-between items-center mb-4 print:hidden">
+      <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Invoices</h1>
-        <div className="flex gap-2">
-          <Link href="/dashboard/receptionist/invoices/new">
-            <Button>Create Invoice</Button>
-          </Link>
-          <Button onClick={handlePrint} variant="outline">🖨 Export / Print</Button>
-        </div>
+        <Link href="/dashboard/receptionist/invoices/new">
+          <Button>New Invoice</Button>
+        </Link>
       </div>
-
-      {/* ✅ Printable container */}
-      <div ref={printRef}>
-        {loading ? (
-          <p>Loading...</p>
-        ) : invoices.length === 0 ? (
-          <p>No invoices found.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full border">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="text-left p-2 border">Patient</th>
-                  <th className="text-left p-2 border">Status</th>
-                  <th className="text-left p-2 border">Payment</th>
-                  <th className="text-left p-2 border">Date</th>
-                  <th className="text-left p-2 border">Total ($)</th>
+      {loading ? (
+        <p>Loading...</p>
+      ) : invoices.length === 0 ? (
+        <p>No invoices found.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full border">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="p-2 border">Patient</th>
+                <th className="p-2 border">Total</th>
+                <th className="p-2 border">Discount</th>
+                <th className="p-2 border">Status</th>
+                <th className="p-2 border">Paid At</th>
+                <th className="p-2 border">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoices.map((inv) => (
+                <tr key={inv.$id} className="border-t">
+                  <td className="p-2 border">{patientMap[inv.patientId] ?? inv.patientId}</td>
+                  <td className="p-2 border">${inv.totalAmount?.toFixed(2)}</td>
+                  <td className="p-2 border">${inv.discount?.toFixed(2) ?? 0}</td>
+                  <td className="p-2 border capitalize">{inv.status}</td>
+                  <td className="p-2 border">
+                    {inv.paidAt ? new Date(inv.paidAt).toLocaleDateString() : "-"}
+                  </td>
+                  <td className="p-2 border flex gap-2">
+                    <Link href={`/dashboard/receptionist/invoices/view/${inv.$id}`}>
+                      <Button variant="outline">View</Button>
+                    </Link>
+                    <Link href={`/dashboard/receptionist/invoices/edit/${inv.$id}`}>
+                      <Button variant="outline">Edit</Button>
+                    </Link>
+                    <Button variant="destructive" onClick={() => handleDelete(inv.$id)}>
+                      Delete
+                    </Button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {invoices.map((inv) => (
-                  <tr key={inv.$id} className="border-t">
-                    <td className="p-2 border">{patientsMap[inv.patientId] ?? '-'}</td>
-                    <td className="p-2 border capitalize">{inv.status}</td>
-                    <td className="p-2 border capitalize">{inv.paymentMethod}</td>
-                    <td className="p-2 border">
-                      {inv.dateIssued
-                        ? new Date(inv.dateIssued).toLocaleString()
-                        : '-'}
-                    </td>
-                    <td className="p-2 border">${(inv.totalAmount ?? 0).toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
