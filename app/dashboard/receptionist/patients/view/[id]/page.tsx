@@ -8,6 +8,7 @@ import { DATABASE_ID } from '@/lib/appwrite.config';
 import { COLLECTIONS } from '@/lib/collections';
 import type { Patient } from '@/types';
 import { Button } from '@/components/ui/Button';
+import { toDateInputValue } from '@/utils/date';
 
 export default function PatientViewPage() {
   const router = useRouter();
@@ -57,7 +58,7 @@ export default function PatientViewPage() {
       <h1 className="text-2xl font-bold mb-4">Patient Details</h1>
       <div><strong>Name:</strong> {patient.fullName}</div>
       <div><strong>Gender:</strong> {patient.gender}</div>
-      <div><strong>DOB:</strong> {patient.dob ?? '-'}</div>
+      <div><strong>DOB:</strong> {patient.dob ? toDateInputValue(patient.dob) : '-'}</div>
       <div><strong>Blood Type:</strong> {patient.bloodType ?? '-'}</div>
       <div><strong>Phone:</strong> {patient.phone ?? '-'}</div>
       <div><strong>Email:</strong> {patient.email ?? '-'}</div>
@@ -69,7 +70,7 @@ export default function PatientViewPage() {
         <Button variant="outline" onClick={() => router.push(`/dashboard/receptionist/patients/edit/${patient.$id}`)}>
           Edit
         </Button>
-        <Button variant="outline" onClick={() => router.back()}>
+        <Button variant="outline" onClick={() => router.push(`/dashboard/receptionist/patients`)}>
           Back
         </Button>
       </div>

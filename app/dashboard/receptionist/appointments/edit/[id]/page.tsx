@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
 import type { Appointment, Patient, Doctor, Nurse } from '@/types';
+import { toDateTimeLocalInputValue } from '@/utils/date';
 
 export default function EditAppointmentPage() {
   const router = useRouter();
@@ -136,11 +137,12 @@ export default function EditAppointmentPage() {
     e.preventDefault();
     setSaving(true);
     try {
+      const isoDate = new Date(form.date).toISOString();
       await databases.updateDocument(
         DATABASE_ID,
         COLLECTIONS.APPOINTMENTS,
         id,
-        form
+        { ...form, date: isoDate } // Always submit ISO string!
       );
       toast.success('Appointment updated');
       router.push('/dashboard/receptionist/appointments/view/' + id);
@@ -213,7 +215,7 @@ export default function EditAppointmentPage() {
             <Input
               name="date"
               type="datetime-local"
-              value={form.date}
+              value={toDateTimeLocalInputValue(form.date)}
               onChange={handleChange}
               required
             />

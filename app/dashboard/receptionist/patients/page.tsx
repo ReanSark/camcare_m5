@@ -9,6 +9,8 @@ import { COLLECTIONS } from '@/lib/collections';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import type { Patient } from '@/types';
+import { toDateInputValue } from '@/utils/date';
+
 
 export default function PatientsPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -112,7 +114,7 @@ export default function PatientsPage() {
                 <tr key={patient.$id} className="border-t">
                   <td className="p-2 border">{patient.fullName}</td>
                   <td className="p-2 border">{patient.gender}</td>
-                  <td className="p-2 border">{patient.dob ?? '-'}</td>
+                  <td className="p-2 border">{patient.dob ? toDateInputValue(patient.dob) : '-'}</td>
                   <td className="p-2 border">{patient.bloodType ?? '-'}</td>
                   <td className="p-2 border">{patient.phone ?? '-'}</td>
                   <td className="p-2 border">{patient.email ?? '-'}</td>

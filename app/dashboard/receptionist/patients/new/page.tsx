@@ -12,6 +12,7 @@ import { COLLECTIONS } from '@/lib/collections';
 import { ID } from 'appwrite';
 import type { Patient } from '@/types';
 import { useAuth } from '@/context/AuthProvider'; // get current user
+import { toDateInputValue } from '@/utils/date';
 
 export default function NewPatientPage() {
   const router = useRouter();
@@ -101,7 +102,7 @@ export default function NewPatientPage() {
 
         <div>
           <Label htmlFor="dob">Date of Birth</Label>
-          <Input name="dob" type="date" value={form.dob} onChange={handleChange} />
+          <Input name="dob" type="date" value={toDateInputValue(form.dob)} onChange={handleChange} />
         </div>
 
         <div>

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/Label';
 import { ID } from 'appwrite';
 import type { Appointment, Patient, Doctor, Nurse } from '@/types';
+import { toDateTimeLocalInputValue, toDateTimeLocalDisplay } from '@/utils/date';
 
 export default function NewAppointmentPage() {
   const router = useRouter();
@@ -125,6 +126,9 @@ export default function NewAppointmentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // form.date is "2025-08-08T13:00"
+    const isoDate = new Date(form.date).toISOString();
+
     if (!form.patientId || !Array.isArray(form.doctorIds) || form.doctorIds.length === 0 || !form.date) {
       toast.error('Patient, doctor, and date are required');
       return;
@@ -136,7 +140,10 @@ export default function NewAppointmentPage() {
         DATABASE_ID,
         COLLECTIONS.APPOINTMENTS,
         ID.unique(),
-        form
+        {
+          ...form,
+          date: isoDate,
+        }
       );
       toast.success('Appointment created');
       router.push('/dashboard/receptionist/appointments');
@@ -207,7 +214,7 @@ export default function NewAppointmentPage() {
             <Input
               name="date"
               type="datetime-local"
-              value={form.date}
+              value={toDateTimeLocalInputValue(form.date)}
               onChange={handleChange}
               required
             />

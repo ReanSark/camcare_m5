@@ -9,6 +9,7 @@ import { COLLECTIONS } from '@/lib/collections';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import type { Appointment, Patient, Doctor, Nurse } from '@/types';
+import { toDateTimeLocalDisplay } from '@/utils/date';
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -179,7 +180,7 @@ export default function AppointmentsPage() {
               {filteredAppointments.map((a) => (
                 <tr key={a.$id} className="border-t">
                   <td className="p-2 border">
-                    {a.date ? new Date(a.date).toLocaleString() : '-'}
+                      {a.date ? toDateTimeLocalDisplay(a.date) : '-'}
                   </td>
                   <td className="p-2 border">{patientMap[a.patientId] ?? '-'}</td>
                   <td className="p-2 border">

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import type { Patient } from '@/types';
+import { toDateInputValue } from '@/utils/date';
 
 export default function PatientEditPage() {
   const router = useRouter();
@@ -118,7 +119,7 @@ export default function PatientEditPage() {
         </div>
         <div>
           <Label htmlFor="dob">Date of Birth</Label>
-          <Input name="dob" type="date" value={form.dob ?? ''} onChange={handleChange} />
+          <Input name="dob" type="date" value={toDateInputValue(form.dob) ?? ''} onChange={handleChange} />
         </div>
         <div>
           <Label htmlFor="bloodType">Blood Type</Label>

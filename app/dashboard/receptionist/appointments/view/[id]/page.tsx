@@ -8,6 +8,7 @@ import { DATABASE_ID } from '@/lib/appwrite.config';
 import { COLLECTIONS } from '@/lib/collections';
 import { Button } from '@/components/ui/Button';
 import type { Appointment, Patient, Doctor, Nurse } from '@/types';
+import { toDateTimeLocalDisplay } from '@/utils/date';
 
 export default function ViewAppointmentPage() {
   const router = useRouter();
@@ -121,7 +122,10 @@ export default function ViewAppointmentPage() {
   return (
     <div className="max-w-xl mx-auto py-8">
       <h1 className="text-2xl font-bold mb-4">Appointment Details</h1>
-      <div><strong>Date/Time:</strong> {appointment.date ? new Date(appointment.date).toLocaleString() : '-'}</div>
+      {/* <div><strong>Date/Time:</strong> {appointment.date ? new Date(appointment.date).toLocaleString() : '-'}</div> */}
+      <div>
+        <strong>Date/Time:</strong> {appointment.date ? toDateTimeLocalDisplay(appointment.date) : '-'}
+      </div>
       <div><strong>Patient:</strong> {patient ? patient.fullName : appointment.patientId}</div>
       <div>
         <strong>Doctor(s):</strong> {doctors.length ? doctors.map(d => d.fullName).join(', ') : (appointment.doctorIds ?? []).join(', ')}
@@ -136,7 +140,7 @@ export default function ViewAppointmentPage() {
         <Button variant="outline" onClick={() => router.push(`/dashboard/receptionist/appointments/edit/${appointment.$id}`)}>
           Edit
         </Button>
-        <Button variant="outline" onClick={() => router.back()}>
+        <Button variant="outline" onClick={() => router.push(`/dashboard/receptionist/appointments`)}>
           Back
         </Button>
       </div>
