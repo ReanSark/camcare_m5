@@ -46,7 +46,7 @@ export default function ReceptionistDashboard() {
       {/* 🔍 Optional search bar (not yet functional) */}
       <div>
         <Input
-          placeholder="Search patients, appointments, or invoices..."
+          placeholder="Search patients, appointments, or invoices... [Coming Soon]"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
