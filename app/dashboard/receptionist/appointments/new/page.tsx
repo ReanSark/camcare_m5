@@ -12,9 +12,12 @@ import { Label } from '@/components/ui/Label';
 import { ID } from 'appwrite';
 import type { Appointment, Patient, Doctor, Nurse } from '@/types';
 import { toDateTimeLocalInputValue, toDateTimeLocalDisplay } from '@/utils/date';
+import { useSearchParams } from 'next/navigation';
 
 export default function NewAppointmentPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const patientIdFromQuery = searchParams.get('patientId') || '';
 
   // Reference data for dropdowns
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -24,7 +27,7 @@ export default function NewAppointmentPage() {
 
   // Form state
   const [form, setForm] = useState<Omit<Appointment, '$id'>>({
-    patientId: '',
+    patientId: patientIdFromQuery,
     doctorIds: [],
     nurseIds: [],
     date: '',
@@ -161,12 +164,20 @@ export default function NewAppointmentPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="patientId">Patient</Label>
+            {patientIdFromQuery && (
+              <div className="mb-2 text-green-700 font-semibold">
+                Booking appointment for: {
+                  patients.find(p => p.$id === patientIdFromQuery)?.fullName || patientIdFromQuery
+                }
+              </div>
+            )}
             <select
               name="patientId"
               value={form.patientId}
               onChange={handleChange}
               className="w-full p-2 rounded border"
               required
+              disabled={!!patientIdFromQuery} // disables if prefilled
             >
               <option value="">-- Select Patient --</option>
               {patients.map((p) => (

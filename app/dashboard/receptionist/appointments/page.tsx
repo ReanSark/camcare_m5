@@ -202,12 +202,12 @@ export default function AppointmentsPage() {
                     <Link href={`/dashboard/receptionist/appointments/edit/${a.$id}`}>
                       <Button variant="outline">Edit</Button>
                     </Link>
-                    <Button
+                    {/* <Button
                       variant="destructive"
                       onClick={() => handleDelete(a.$id)}
                     >
                       Delete
-                    </Button>
+                    </Button> */}
                     {/* Quick status action */}
                     {a.status !== "arrived" && (
                       <Button

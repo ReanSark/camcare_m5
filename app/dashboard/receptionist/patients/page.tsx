@@ -132,12 +132,15 @@ export default function PatientsPage() {
                     <Link href={`/dashboard/receptionist/patients/edit/${patient.$id}`}>
                       <Button variant="outline">Edit</Button>
                     </Link>
-                    <Button
+                    <Link href={`/dashboard/receptionist/appointments/new?patientId=${patient.$id}`}>
+                      <Button variant="outline">New Appointment</Button>
+                    </Link>
+                    {/* <Button
                       variant="destructive"
                       onClick={() => handleDelete(patient.$id)}
                     >
                       Delete
-                    </Button>
+                    </Button> */}
                   </td>
                 </tr>
               ))}
