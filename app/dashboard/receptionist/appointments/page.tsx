@@ -109,13 +109,31 @@ export default function AppointmentsPage() {
   const nurseMap = Object.fromEntries(nurses.map((n) => [n.$id, n.fullName]));
 
   // Filter/search logic
-  const filteredAppointments = appointments.filter((a) => {
+    const filteredAppointments = appointments.filter((a) => {
+    const q = search.toLowerCase();
     const patientName = patientMap[a.patientId]?.toLowerCase() || '';
+    const reason = (a.reason ?? '').toLowerCase();
+    const doctorNames = (a.doctorIds ?? [])
+      .map((id) => doctorMap[id]?.toLowerCase() ?? '')
+      .join(' ');
+    const nurseNames = (a.nurseIds ?? [])
+      .map((id) => nurseMap[id]?.toLowerCase() ?? '')
+      .join(' ');
+    const status = (a.status ?? '').toLowerCase();
+    const date = a.date ? toDateTimeLocalDisplay(a.date).toLowerCase() : '';
+
     return (
-      patientName.includes(search.toLowerCase()) ||
-      (a.reason ?? '').toLowerCase().includes(search.toLowerCase())
+      patientName.includes(q) ||
+      reason.includes(q) ||
+      doctorNames.includes(q) ||
+      nurseNames.includes(q) ||
+      status.includes(q) ||
+      date.includes(q)
+
+      // add more as needed (e.g. search date, other)
     );
   });
+
 
   // Delete handler
   const handleDelete = async (id: string) => {
@@ -209,7 +227,7 @@ export default function AppointmentsPage() {
                       Delete
                     </Button> */}
                     {/* Quick status action */}
-                    {a.status !== "arrived" && (
+                    {!["arrived", "completed", "canceled"].includes(a.status) && (
                       <Button
                         onClick={() => updateStatus(a.$id, "arrived")}
                         variant="secondary"
