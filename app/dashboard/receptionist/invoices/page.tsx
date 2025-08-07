@@ -109,9 +109,9 @@ export default function InvoicesPage() {
                     <Link href={`/dashboard/receptionist/invoices/edit/${inv.$id}`}>
                       <Button variant="outline">Edit</Button>
                     </Link>
-                    <Button variant="destructive" onClick={() => handleDelete(inv.$id)}>
+                    {/* <Button variant="destructive" onClick={() => handleDelete(inv.$id)}>
                       Delete
-                    </Button>
+                    </Button> */}
                   </td>
                 </tr>
               ))}
