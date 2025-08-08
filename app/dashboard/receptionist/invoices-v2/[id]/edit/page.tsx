@@ -16,6 +16,7 @@ import type {
 } from "@/types";
 import { computeTotals, lineSubtotal } from "@/lib/totals";
 import PaymentsPanel from "@/components/invoices-v2/PaymentsPanel";
+import Link from "next/link";
 
 type SettingsPreview = Pick<
   Settings,
@@ -225,6 +226,11 @@ export default function EditInvoicePage() {
           >
             {finalizing ? "Finalizing…" : "Finalize"}
           </button>
+          {invoice.docStatus === "final" && (
+            <Link href={`/dashboard/receptionist/invoices-v2/${invoice.$id}/print`} className="px-4 py-2 rounded border">
+              Print View
+            </Link>
+          )}
           <button
             type="button"
             className="px-4 py-2 rounded border"
