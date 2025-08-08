@@ -1,10 +1,12 @@
 // lib/settings.ts
+import "server-only";
 import { databases } from "@/lib/appwriteServer";
+import { DATABASE_ID } from "@/config/env";
 import { COLLECTIONS } from "@/lib/collections";
 import type { Settings } from "@/types";
 
 const CAMBODIA_DEFAULTS: Settings = {
-  $id: "global" as any,
+  $id: "global" as unknown as string,
   baseCurrency: "KHR",
   allowedCurrencies: ["KHR", "USD"],
   fxCapture: "both",
@@ -46,8 +48,11 @@ export async function getSettings(): Promise<Settings> {
       COLLECTIONS.SETTINGS,
       "global"
     );
-    return { ...CAMBODIA_DEFAULTS, ...(doc as any) };
+    const partial = doc as unknown as Partial<Settings>;
+    return { ...CAMBODIA_DEFAULTS, ...partial };
   } catch {
     return CAMBODIA_DEFAULTS;
   }
 }
+
+export const DEFAULT_SETTINGS = CAMBODIA_DEFAULTS;

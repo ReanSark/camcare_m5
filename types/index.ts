@@ -206,7 +206,6 @@ export interface Invoice extends DocBase {
   discount?: number;
   discountType?: DiscountType;
   discountNote?: string;
-  status: "paid" | "unpaid" | "partial";
   paymentMethod?: PaymentMethod;
   paidAt?: ISODateTimeString | null;
   paidBy?: AppwriteID | null;

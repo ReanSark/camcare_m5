@@ -1,13 +1,19 @@
 // lib/appwriteServer.ts
 import "server-only";
 import { Client, Databases, Storage, Users, ID } from "node-appwrite";
+import { APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID } from "@/config/env";
 
-const client = new Client()
-  .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
-  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!)
-  .setKey(process.env.APPWRITE_API_KEY!); // server key
+const API_KEY = process.env.APPWRITE_API_KEY!;
+if (process.env.NODE_ENV === "development") {
+  if (!API_KEY) throw new Error("Missing APPWRITE_API_KEY (server key)");
+}
 
-export const databases = new Databases(client);
-export const storage = new Storage(client);
-export const users = new Users(client);
+const serverClient = new Client()
+  .setEndpoint(APPWRITE_ENDPOINT)
+  .setProject(APPWRITE_PROJECT_ID)
+  .setKey(API_KEY);
+
+export const databases = new Databases(serverClient);
+export const storage = new Storage(serverClient);
+export const users = new Users(serverClient);
 export const IDHelper = ID;
