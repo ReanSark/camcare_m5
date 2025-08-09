@@ -2,7 +2,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { databases, IDGen } from "@/lib/appwrite.config";
+import { account, databases } from "@/lib/appwrite.config";
+import type { Models } from "appwrite";
 import { Query } from "appwrite";
 import { DATABASE_ID } from "@/config/env";
 import { COLLECTIONS } from "@/lib/collections";
@@ -63,6 +64,7 @@ export default function PaymentsPanel({
 }: Props) {
   const [loading, setLoading] = useState<boolean>(true);
   const [payments, setPayments] = useState<InvoicePayment[]>([]);
+  const [me, setMe] = useState<{ $id: string; name?: string | null } | null>(null);
 
   // form state
   const [showForm, setShowForm] = useState<null | "payment" | "refund">(null);
@@ -100,7 +102,16 @@ export default function PaymentsPanel({
   }
 
   useEffect(() => {
-    void load();
+    (async () => {
+      // current user (for performedBy)
+      try {
+        const user: Models.User<Models.Preferences> = await account.get();
+        setMe({ $id: user.$id, name: user.name });
+      } catch {
+        setMe(null);
+      }
+      void load();
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoiceId]);
 
@@ -124,38 +135,36 @@ export default function PaymentsPanel({
       alert("Amount must be > 0");
       return;
     }
+    if (!me?.$id) {
+      alert("Please sign in to record payments.");
+      return;
+    }
 
-    // 1) create InvoicePayment
-    await databases.createDocument(
-      DATABASE_ID,
-      COLLECTIONS.INVOICE_PAYMENTS,
-      IDGen.unique(),
-      {
-        invoiceId,
-        type: showForm,
+    // Call server API (handles DB write + audit + status update)
+    const res = await fetch(`/api/invoices/${invoiceId}/payments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: me.$id,
+        type: showForm, // "payment" | "refund"
         amount: amt,
-        currency,
         method,
         paidAt: localDateTimeToISO(paidAtLocal),
         note,
-      }
-    );
-
-    // 2) reload payments, compute new status from the fresh list
-    const fresh = await load();
-    const newStatus = derivePaymentStatus(fresh, totalAmount, refundPolicy);
-    const refundedAmount = fresh
-      .filter((p) => p.type === "refund")
-      .reduce((s, p) => s + (p.amount || 0), 0);
-
-    await databases.updateDocument(DATABASE_ID, COLLECTIONS.INVOICES, invoiceId, {
-      paymentStatus: newStatus,
-      refundedAmount,
+        currency,
+      }),
     });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data?.error || "Failed to save");
+      return;
+    }
 
     setShowForm(null);
     setAmount(0);
     setNote("");
+    // reload list and notify parent to refresh invoice header/status
+    await load();
     if (onChange) onChange();
   }
 
