@@ -158,7 +158,7 @@ export default function PrintInvoicePage() {
     const res = await fetch(`/api/invoices/${invoiceId}/print`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: me.$id }),
+      body: JSON.stringify({ userId: me.$id, userName: me.name ?? null }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -180,7 +180,35 @@ export default function PrintInvoicePage() {
   }
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="relative p-6 space-y-4">
+      {/* Print CSS + watermark */}
+      <style jsx global>{`
+        @page { margin: 12mm; }
+        @media print {
+          html, body { background: #fff !important; }
+          body { font-size: 12px; line-height: 1.35; }
+          .print\\:hidden { display: none !important; }
+          .print\\:tight td, .print\\:tight th { padding: 4px 6px !important; }
+          .print-watermark {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-20deg);
+            font-size: 120px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: #000;
+            opacity: 0.12;
+            z-index: 0;
+            pointer-events: none;
+            user-select: none;
+          }
+        }
+      `}</style>
+
+      {(invoice.docStatus !== "final" && settings.showDraftWatermark) && (
+        <div className="print-watermark">DRAFT</div>
+      )}
       {/* Actions (hide in print) */}
       <div className="flex gap-2 print:hidden">
         <button type="button" className="px-3 py-1 rounded border" onClick={() => router.back()}>
@@ -216,7 +244,7 @@ export default function PrintInvoicePage() {
 
       {/* Items */}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm print:tight">
           <thead className="text-left border-b">
             <tr className="[&>th]:py-2 [&>th]:px-2">
               <th>#</th>
@@ -282,7 +310,7 @@ export default function PrintInvoicePage() {
         <div className="border rounded p-2">
           <div className="text-xs text-muted-foreground">Printed By</div>
           <div className="text-base font-semibold">
-            {invoice.printedBy || me?.$id || "—"}
+            {invoice.printedBy || me?.name || invoice.printedBy || me?.$id || "—"}
           </div>
         </div>
       </div>

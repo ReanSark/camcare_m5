@@ -5,7 +5,7 @@ import { DATABASE_ID } from "@/config/env";
 import { COLLECTIONS } from "@/lib/collections";
 import type { Invoice } from "@/types";
 
-type Body = { userId: string; note?: string };
+type Body = { userId: string; userName?: string | null; note?: string };
 
 export async function POST(req: NextRequest, { params }: { params: { invoiceId: string } }) {
   try {
@@ -23,6 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: { invoiceId: 
 
     await databases.updateDocument(DATABASE_ID, COLLECTIONS.INVOICES, invoiceId, {
       printedBy: body.userId,
+      printedByName: body.userName ?? null,
       printedAt,
     });
 
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest, { params }: { params: { invoiceId: 
         changedFields: ["printedBy", "printedAt"],
         performedBy: body.userId,
         timestamp: printedAt,
-        note: body.note ?? "Printed invoice",
+        note: body.note ?? `Printed invoice by ${body.userName ?? body.userId}`,
       }
     );
 
