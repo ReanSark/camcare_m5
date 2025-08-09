@@ -1,4 +1,4 @@
-// app/dashboard/receptionist/invoices-v2/[id]/edit/page.tsx
+// app/dashboard/receptionist/invoices/[id]/edit/page.tsx
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -187,7 +187,7 @@ export default function EditInvoicePage() {
 
       alert(`Finalized. Invoice No: ${data.invoiceNo}`);
       // Optionally navigate to view page:
-      // router.push(`/dashboard/receptionist/invoices-v2/${invoice.$id}/view`);
+      // router.push(`/dashboard/receptionist/invoices/${invoice.$id}/view`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Finalize failed";
       alert(msg);
@@ -289,7 +289,7 @@ export default function EditInvoicePage() {
             {invoice?.isArchived ? "Unarchive" : "Archive"}
           </button>
           {invoice.docStatus === "final" && (
-            <Link href={`/dashboard/receptionist/invoices-v2/${invoice.$id}/print`} className="px-4 py-2 rounded border">
+            <Link href={`/dashboard/receptionist/invoices/${invoice.$id}/print`} className="px-4 py-2 rounded border">
               Print View
             </Link>
           )}

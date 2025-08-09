@@ -1,4 +1,4 @@
-// app/dashboard/receptionist/invoices-v2/[id]/view/page.tsx
+// app/dashboard/receptionist/invoices/[id]/view/page.tsx
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -210,11 +210,11 @@ export default function InvoiceViewPage() {
         </div>
         <div className="flex gap-2">
           {invoice.docStatus === "draft" ? (
-            <Link href={`/dashboard/receptionist/invoices-v2/${invoice.$id}/edit`} className="px-4 py-2 rounded border">
+            <Link href={`/dashboard/receptionist/invoices/${invoice.$id}/edit`} className="px-4 py-2 rounded border">
               Edit Draft
             </Link>
           ) : (
-            <Link href={`/dashboard/receptionist/invoices-v2/${invoice.$id}/print`} className="px-4 py-2 rounded border">
+            <Link href={`/dashboard/receptionist/invoices/${invoice.$id}/print`} className="px-4 py-2 rounded border">
               Print View
             </Link>
           )}

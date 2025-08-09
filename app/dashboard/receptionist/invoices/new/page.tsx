@@ -1,267 +1,564 @@
-'use client';
+// app/dashboard/receptionist/invoices/new/page.tsx
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { databases } from '@/lib/appwrite.config';
-import { DATABASE_ID } from '@/lib/appwrite.config';
-import { COLLECTIONS } from '@/lib/collections';
-import { ID } from 'appwrite';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Label } from '@/components/ui/Label';
-import type { Invoice, InvoiceItem, Patient } from '@/types';
+import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { databases, IDGen } from "@/lib/appwrite.config";
+import { COLLECTIONS } from "@/lib/collections";
+import { DATABASE_ID } from "@/config/env";
+import type {
+  Invoice,
+  InvoiceItem,
+  Settings,
+  AppwriteID,
+  ISODateString,
+} from "@/types";
+import { computeTotals, lineSubtotal } from "@/lib/totals";
 
-const emptyItem: Omit<InvoiceItem, "$id" | "invoiceId"> = {
-  type: "manual",
-  refId: "",
-  name: "",
-  price: 0,
-  unit: 1,
-  discount: 0,
-  discountType: "manual",
-  discountNote: "",
-  subtotal: 0,
+// ---------- Local helper types ----------
+type PatientDoc = {
+  $id: AppwriteID;
+  fullName: string;
+  phone?: string;
+  dob?: ISODateString | null;
+};
+
+type LabTestDoc = {
+  $id: AppwriteID;
+  name: string;
+  price: number;
+};
+
+type DraftItem = {
+  type: "lab" | "service" | "pharmacy" | "manual";
+  refId?: AppwriteID | null;
+  name: string;
+  price: number;
+  unit: number;
+  discount?: number;
+  discountType?: InvoiceItem["discountType"];
+  discountNote?: string;
+  taxable?: boolean; // default true unless overridden by settings
+  groupLabel?: string; // "LAB"
+  displayOrder?: number;
+  labResultId?: AppwriteID | null;
+};
+
+type InvoiceCreatePayload = Pick<
+  Invoice,
+  | "patientId"
+  | "currency"
+  | "discount"
+  | "taxRate"
+  | "serviceChargeRate"
+  | "docStatus"
+  | "paymentStatus"
+  | "patientSnapshotName"
+  | "patientSnapshotPhone"
+  | "patientSnapshotDob"
+  | "createdAt"
+>;
+
+const FALLBACK_SETTINGS: Pick<
+  Settings,
+  | "baseCurrency"
+  | "taxRate"
+  | "serviceChargeRate"
+  | "calcOrder"
+  | "roundingMode"
+  | "roundingKHRMode"
+  | "roundingUSDDecimals"
+  | "labSectionLabel"
+  | "defaultItemTaxable"
+  | "nonTaxableTypes"
+> = {
+  baseCurrency: "KHR",
+  taxRate: 0,
+  serviceChargeRate: 0,
+  calcOrder: "A",
+  roundingMode: "half-up",
+  roundingKHRMode: "nearest_100",
+  roundingUSDDecimals: 2,
+  labSectionLabel: "LAB",
+  defaultItemTaxable: true,
+  nonTaxableTypes: ["lab"],
 };
 
 export default function NewInvoicePage() {
   const router = useRouter();
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  // Invoice state
-  const [form, setForm] = useState<Omit<Invoice, "$id" | "totalAmount">>({
-    patientId: "",
-    groupInvoiceId: "",
-    discount: 0,
-    discountType: "manual",
-    discountNote: "",
-    status: "unpaid",
-    paymentMethod: "cash",
-    note: "",
-    isArchived: false,
-  });
+  // ---------- State ----------
+  const [loading, setLoading] = useState<boolean>(false);
+  const [patients, setPatients] = useState<PatientDoc[]>([]);
+  const [patientFilter, setPatientFilter] = useState<string>("");
+  const [patientId, setPatientId] = useState<AppwriteID | "">("");
+  const [patientSnapshot, setPatientSnapshot] = useState<{
+    name?: string;
+    phone?: string;
+    dob?: ISODateString;
+  }>({});
 
-  // Invoice items (not yet saved to DB)
-  const [items, setItems] = useState<Omit<InvoiceItem, "$id" | "invoiceId">[]>([
-    { ...emptyItem }
-  ]);
+  const [labTests, setLabTests] = useState<LabTestDoc[]>([]);
+  const [labFilter, setLabFilter] = useState<string>("");
 
+  const [settings, setSettings] = useState<typeof FALLBACK_SETTINGS>(
+    FALLBACK_SETTINGS
+  );
+
+  const [invoiceLevelDiscount, setInvoiceLevelDiscount] = useState<number>(0);
+
+  const [items, setItems] = useState<DraftItem[]>([]);
+
+  // ---------- Effects: load data ----------
   useEffect(() => {
-    const fetchPatients = async () => {
-      setLoading(true);
-      try {
-        const res = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PATIENTS);
-        setPatients(res.documents.map((doc) => ({
-          $id: doc.$id,
-          fullName: doc.fullName,
-        } as Patient)));
-      } catch {
-        toast.error('Failed to load patients');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPatients();
+    // Settings (client-readable)
+    databases
+      .getDocument(DATABASE_ID, COLLECTIONS.SETTINGS, "global")
+      .then((doc) => {
+        const s = doc as unknown as Settings;
+        setSettings({
+          baseCurrency: s.baseCurrency ?? FALLBACK_SETTINGS.baseCurrency,
+          taxRate: s.taxRate ?? 0,
+          serviceChargeRate: s.serviceChargeRate ?? 0,
+          calcOrder: s.calcOrder ?? "A",
+          roundingMode: s.roundingMode ?? "half-up",
+          roundingKHRMode: s.roundingKHRMode ?? "nearest_100",
+          roundingUSDDecimals: s.roundingUSDDecimals ?? 2,
+          labSectionLabel: s.labSectionLabel ?? "LAB",
+          defaultItemTaxable:
+            s.defaultItemTaxable ?? FALLBACK_SETTINGS.defaultItemTaxable,
+          nonTaxableTypes: s.nonTaxableTypes ?? ["lab"],
+        });
+      })
+      .catch(() => {
+        // fallback already set
+      });
+
+    // Patients (first page)
+    databases
+      .listDocuments(DATABASE_ID, COLLECTIONS.PATIENTS, [])
+      .then((res) => {
+        const rows = (res.documents as unknown as PatientDoc[]) || [];
+        setPatients(rows);
+      })
+      .catch(() => setPatients([]));
+
+    // Lab tests (first page)
+    databases
+      .listDocuments(DATABASE_ID, COLLECTIONS.LABTESTCATALOG, [])
+      .then((res) => {
+        const rows = (res.documents as unknown as LabTestDoc[]) || [];
+        setLabTests(rows);
+      })
+      .catch(() => setLabTests([]));
   }, []);
 
-  // All subtotal and total calculation are now derived only, never set state in useEffect!
-  const calculatedItems = items.map(item => ({
-    ...item,
-    subtotal: Math.max((item.price * item.unit) - (item.discount || 0), 0)
-  }));
-  const invoiceSubtotal = calculatedItems.reduce((sum, i) => sum + i.subtotal, 0);
-  const invoiceTotal = Math.max(invoiceSubtotal - (form.discount || 0), 0);
+  // ---------- Derived ----------
+  const filteredPatients = useMemo(() => {
+    if (!patientFilter.trim()) return patients;
+    const q = patientFilter.toLowerCase();
+    return patients.filter(
+      (p) =>
+        p.fullName.toLowerCase().includes(q) ||
+        (p.phone ?? "").toLowerCase().includes(q)
+    );
+  }, [patients, patientFilter]);
 
-  // Handlers for invoice fields
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: name === "discount" ? Number(value) : value,
+  const filteredLabTests = useMemo(() => {
+    if (!labFilter.trim()) return labTests;
+    const q = labFilter.toLowerCase();
+    return labTests.filter((t) => t.name.toLowerCase().includes(q));
+  }, [labTests, labFilter]);
+
+  const previewTotals = useMemo(() => {
+    // convert DraftItem[] to InvoiceItem-like for computeTotals
+    const draftAsItems: InvoiceItem[] = items.map((i, idx) => ({
+      $id: "" as AppwriteID,
+      invoiceId: "" as AppwriteID,
+      type: i.type,
+      refId: i.refId ?? null,
+      name: i.name,
+      price: i.price,
+      unit: i.unit,
+      discount: i.discount ?? 0,
+      discountType: i.discountType,
+      discountNote: i.discountNote,
+      subtotal: lineSubtotal({
+        ...i,
+        // satisfy InvoiceItem for helper
+        invoiceId: "" as AppwriteID,
+      } as unknown as InvoiceItem),
+      displayOrder: i.displayOrder ?? idx + 1,
+      groupLabel: i.groupLabel,
+      taxable: i.taxable !== undefined ? i.taxable : settings.defaultItemTaxable,
+      labResultId: i.labResultId ?? null,
+      createdAt: undefined,
+      updatedAt: undefined,
+      updatedBy: undefined,
     }));
+
+    return computeTotals({
+      items: draftAsItems,
+      invoiceDiscount: invoiceLevelDiscount,
+      taxRate: settings.taxRate,
+      serviceChargeRate: settings.serviceChargeRate,
+      settings: {
+        // only required bits from Settings used by computeTotals
+        roundingMode: settings.roundingMode,
+        roundingKHRMode: settings.roundingKHRMode,
+        roundingUSDDecimals: settings.roundingUSDDecimals,
+        serviceChargeRate: settings.serviceChargeRate,
+        taxRate: settings.taxRate,
+        calcOrder: settings.calcOrder,
+        baseCurrency: settings.baseCurrency,
+      } as Settings,
+      currency: settings.baseCurrency,
+    });
+  }, [items, invoiceLevelDiscount, settings]);
+
+  // ---------- Handlers ----------
+  const handleSelectPatient = (id: AppwriteID) => {
+    setPatientId(id);
+    const p = patients.find((x) => x.$id === id);
+    if (p) {
+      setPatientSnapshot({
+        name: p.fullName,
+        phone: p.phone,
+        dob: p.dob ?? undefined,
+      });
+    }
   };
 
-  const handleItemChange = (idx: number, field: keyof InvoiceItem, value: string | number) => {
+  const addLabTest = (t: LabTestDoc) => {
+    const taxableDefault =
+      settings.nonTaxableTypes?.includes("lab") ? false : settings.defaultItemTaxable;
+
+    setItems((prev) => [
+      ...prev,
+      {
+        type: "lab",
+        refId: t.$id,
+        name: t.name,
+        price: Number(t.price) || 0,
+        unit: 1,
+        discount: 0,
+        taxable: taxableDefault,
+        groupLabel: settings.labSectionLabel ?? "LAB",
+        displayOrder: prev.length + 1,
+      },
+    ]);
+  };
+
+  const removeItem = (index: number) => {
+    setItems((prev) =>
+      prev.filter((_, i) => i !== index).map((row, i) => ({ ...row, displayOrder: i + 1 }))
+    );
+  };
+
+  const updateItem = <K extends keyof DraftItem>(
+    index: number,
+    key: K,
+    value: DraftItem[K]
+  ) => {
     setItems((prev) => {
-      const updated = [...prev];
-      updated[idx] = {
-        ...updated[idx],
-        [field]: field === "unit" || field === "price" || field === "discount" ? Number(value) : value,
-      };
-      return updated;
+      const next = [...prev];
+      next[index] = { ...next[index], [key]: value };
+      return next;
     });
   };
 
-  const addItem = () => setItems((prev) => [...prev, { ...emptyItem }]);
-  const removeItem = (idx: number) => setItems((prev) => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.patientId || items.length === 0) {
-      toast.error('Patient and at least one item required');
+  const handleCreateDraft = async () => {
+    if (!patientId) {
+      alert("Please select a patient first.");
       return;
     }
+    if (items.length === 0) {
+      alert("Please add at least one item (Lab test).");
+      return;
+    }
+
+    setLoading(true);
     try {
-      // 1. Create Invoice (compute total just before save)
-      const invoiceRes = await databases.createDocument(
+      // 1) Create invoice draft
+        const invoicePayload: InvoiceCreatePayload = {
+        patientId,
+        currency: settings.baseCurrency,
+        discount: invoiceLevelDiscount || 0,
+        taxRate: settings.taxRate ?? 0,
+        serviceChargeRate: settings.serviceChargeRate ?? 0,
+        docStatus: "draft",
+        paymentStatus: "unpaid",
+        patientSnapshotName: patientSnapshot.name,
+        patientSnapshotPhone: patientSnapshot.phone,
+        patientSnapshotDob: patientSnapshot.dob,
+        createdAt: new Date().toISOString(),
+        };
+
+      const invDoc = await databases.createDocument(
         DATABASE_ID,
         COLLECTIONS.INVOICES,
-        ID.unique(),
-        {
-          ...form,
-          totalAmount: invoiceTotal,
-        }
+        IDGen.unique(),
+        invoicePayload
       );
-      // 2. Create all InvoiceItems with calculated subtotals
-      for (const item of calculatedItems) {
-        await databases.createDocument(
+      const invoiceId = (invDoc as { $id: AppwriteID }).$id;
+
+      // 2) Create items
+      const promises = items.map((it) =>
+        databases.createDocument(
           DATABASE_ID,
           COLLECTIONS.INVOICE_ITEMS,
-          ID.unique(),
+          IDGen.unique(),
           {
-            ...item,
-            invoiceId: invoiceRes.$id,
+            invoiceId,
+            type: it.type,
+            refId: it.refId ?? null,
+            name: it.name,
+            price: Number(it.price) || 0,
+            unit: Number(it.unit) || 1,
+            discount: Number(it.discount) || 0,
+            discountType: it.discountType ?? "manual",
+            discountNote: it.discountNote ?? "",
+            subtotal: lineSubtotal({
+              // cast to InvoiceItem for helper use only
+              ...(it as unknown as InvoiceItem),
+              invoiceId,
+            }),
+            displayOrder: it.displayOrder ?? 0,
+            groupLabel: it.groupLabel ?? "LAB",
+            taxable:
+              it.taxable !== undefined
+                ? it.taxable
+                : settings.defaultItemTaxable,
+            labResultId: it.labResultId ?? null,
           }
-        );
-      }
-      toast.success('Invoice created');
-      router.push('/dashboard/receptionist/invoices');
-    } catch (err) {
-      toast.error('Failed to create invoice');
+        )
+      );
+
+      await Promise.all(promises);
+
+      alert(`Draft created. Invoice ID: ${invoiceId}`);
+      // You can navigate to edit once you create it:
+      router.push(`/dashboard/receptionist/invoices/${invoiceId}/edit`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to create draft";
+      alert(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // ---------- UI ----------
   return (
-    <div className="max-w-2xl mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">New Invoice</h1>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <Label>Patient</Label>
-            <select
-              name="patientId"
-              value={form.patientId}
-              onChange={handleChange}
-              className="w-full p-2 rounded border"
-              required
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-semibold">New Invoice (v2)</h1>
+
+      {/* Patient selector */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-medium">Patient</h2>
+        <div className="flex gap-3 items-center">
+          <input
+            className="border rounded px-3 py-2 w-64"
+            placeholder="Search patient by name or phone"
+            value={patientFilter}
+            onChange={(e) => setPatientFilter(e.target.value)}
+          />
+          <select
+            className="border rounded px-3 py-2 w-72"
+            value={patientId}
+            onChange={(e) => handleSelectPatient(e.target.value as AppwriteID)}
+          >
+            <option value="">— Select Patient —</option>
+            {filteredPatients.map((p) => (
+              <option key={p.$id} value={p.$id}>
+                {p.fullName} {p.phone ? `• ${p.phone}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+        {patientId && (
+          <div className="text-sm text-muted-foreground">
+            Snapshot will save: <b>{patientSnapshot.name}</b>
+            {patientSnapshot.phone ? ` • ${patientSnapshot.phone}` : ""}{" "}
+            {patientSnapshot.dob ? ` • DOB: ${patientSnapshot.dob}` : ""}
+          </div>
+        )}
+      </section>
+
+      {/* Lab tests picker */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-medium">
+          {settings.labSectionLabel ?? "LAB"} — Add tests
+        </h2>
+        <div className="flex gap-3 items-center">
+          <input
+            className="border rounded px-3 py-2 w-64"
+            placeholder="Search lab test"
+            value={labFilter}
+            onChange={(e) => setLabFilter(e.target.value)}
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {filteredLabTests.map((t) => (
+            <button
+              key={t.$id}
+              type="button"
+              onClick={() => addLabTest(t)}
+              className="border rounded px-3 py-2 text-left hover:bg-accent"
+              title="Add test"
             >
-              <option value="">-- Select Patient --</option>
-              {patients.map((p) => (
-                <option key={p.$id} value={p.$id}>{p.fullName}</option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Status</Label>
-              <select name="status" value={form.status} onChange={handleChange} className="w-full p-2 rounded border">
-                <option value="unpaid">Unpaid</option>
-                <option value="paid">Paid</option>
-                <option value="partial">Partial</option>
-              </select>
-            </div>
-            <div>
-              <Label>Payment Method</Label>
-              <select name="paymentMethod" value={form.paymentMethod} onChange={handleChange} className="w-full p-2 rounded border">
-                <option value="cash">Cash</option>
-                <option value="card">Card</option>
-                <option value="mobile">Mobile</option>
-                <option value="insurance">Insurance</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <Label>Discount (overall)</Label>
-            <Input name="discount" type="number" min="0" value={form.discount ?? 0} onChange={handleChange} />
-          </div>
-          <div>
-            <Label>Discount Type</Label>
-            <select name="discountType" value={form.discountType} onChange={handleChange} className="w-full p-2 rounded border">
-              <option value="manual">Manual</option>
-              <option value="staff">Staff</option>
-              <option value="disability">Disability</option>
-              <option value="promotion">Promotion</option>
-              <option value="insurance">Insurance</option>
-            </select>
-          </div>
-          <div>
-            <Label>Discount Note</Label>
-            <Input name="discountNote" value={form.discountNote ?? ''} onChange={handleChange} />
-          </div>
-          <div>
-            <Label>Other Note</Label>
-            <Input name="note" value={form.note ?? ''} onChange={handleChange} />
-          </div>
-          {/* Invoice Items Table */}
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Invoice Items</h2>
-            <table className="w-full border mb-2">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="p-1 border">Type</th>
-                  <th className="p-1 border">Name</th>
-                  <th className="p-1 border">RefID</th>
-                  <th className="p-1 border">Unit</th>
-                  <th className="p-1 border">Price</th>
-                  <th className="p-1 border">Discount</th>
-                  <th className="p-1 border">Subtotal</th>
-                  <th className="p-1 border"></th>
+              <div className="font-medium">{t.name}</div>
+              <div className="text-sm text-muted-foreground">
+                {Number(t.price) || 0} {settings.baseCurrency}
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Items table */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-medium">Items</h2>
+        {items.length === 0 ? (
+          <div className="text-sm text-muted-foreground">No items yet.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left border-b">
+                <tr className="[&>th]:py-2 [&>th]:px-2">
+                  <th>Type</th>
+                  <th>Name</th>
+                  <th className="w-24">Unit</th>
+                  <th className="w-28">Price</th>
+                  <th className="w-28">Discount</th>
+                  <th className="w-24">Taxable</th>
+                  <th className="w-28 text-right">Subtotal</th>
+                  <th className="w-16"></th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((item, idx) => (
-                  <tr key={idx}>
-                    <td className="p-1 border">
-                      <select
-                        value={item.type}
-                        onChange={e => handleItemChange(idx, 'type', e.target.value)}
-                        className="p-1 border rounded"
-                      >
-                        <option value="manual">Manual</option>
-                        <option value="lab">Lab</option>
-                        <option value="service">Service</option>
-                        <option value="pharmacy">Pharmacy</option>
-                      </select>
-                    </td>
-                    <td className="p-1 border">
-                      <Input value={item.name} onChange={e => handleItemChange(idx, 'name', e.target.value)} required />
-                    </td>
-                    <td className="p-1 border">
-                      <Input value={item.refId ?? ''} onChange={e => handleItemChange(idx, 'refId', e.target.value)} />
-                    </td>
-                    <td className="p-1 border" style={{ minWidth: 70 }}>
-                      <Input type="number" min={1} value={item.unit} onChange={e => handleItemChange(idx, 'unit', e.target.value)} />
-                    </td>
-                    <td className="p-1 border">
-                      <Input type="number" min={0} step="0.01" value={item.price} onChange={e => handleItemChange(idx, 'price', e.target.value)} />
-                    </td>
-                    <td className="p-1 border">
-                      <Input type="number" min={0} value={item.discount} onChange={e => handleItemChange(idx, 'discount', e.target.value)} />
-                    </td>
-                    <td className="p-1 border font-semibold">
-                      ${calculatedItems[idx].subtotal.toFixed(2)}
-                    </td>
-                    <td className="p-1 border">
-                      <Button variant="destructive" onClick={() => removeItem(idx)} disabled={items.length === 1}>
-                        Delete
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                {items.map((row, idx) => {
+                  const sub = lineSubtotal({
+                    ...(row as unknown as InvoiceItem),
+                    invoiceId: "" as AppwriteID,
+                  });
+                  return (
+                    <tr key={idx} className="border-b [&>td]:py-2 [&>td]:px-2">
+                      <td className="uppercase">{row.type}</td>
+                      <td>{row.name}</td>
+                      <td>
+                        <input
+                          type="number"
+                          min={1}
+                          className="border rounded px-2 py-1 w-20"
+                          value={row.unit}
+                          onChange={(e) =>
+                            updateItem(idx, "unit", Math.max(1, Number(e.target.value) || 1))
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          min={0}
+                          className="border rounded px-2 py-1 w-24"
+                          value={row.price}
+                          onChange={(e) =>
+                            updateItem(idx, "price", Math.max(0, Number(e.target.value) || 0))
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          min={0}
+                          className="border rounded px-2 py-1 w-24"
+                          value={row.discount ?? 0}
+                          onChange={(e) =>
+                            updateItem(idx, "discount", Math.max(0, Number(e.target.value) || 0))
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={
+                            row.taxable !== undefined
+                              ? row.taxable
+                              : settings.defaultItemTaxable
+                          }
+                          onChange={(e) => updateItem(idx, "taxable", e.target.checked)}
+                        />
+                      </td>
+                      <td className="text-right">
+                        {sub} {settings.baseCurrency}
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="text-destructive hover:underline"
+                          onClick={() => removeItem(idx)}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
-            <Button type="button" variant="outline" onClick={addItem}>Add Item</Button>
           </div>
-          {/* Totals */}
-          <div className="text-right text-lg font-bold">
-            Total: ${invoiceTotal.toFixed(2)}
+        )}
+      </section>
+
+      {/* Invoice-level discount & totals */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-4">
+          <label className="text-sm">Invoice Discount</label>
+          <input
+            type="number"
+            min={0}
+            className="border rounded px-3 py-2 w-40"
+            value={invoiceLevelDiscount}
+            onChange={(e) =>
+              setInvoiceLevelDiscount(Math.max(0, Number(e.target.value) || 0))
+            }
+          />
+          <div className="ml-auto text-right space-y-1">
+            <div className="text-sm">
+              Line Sum: <b>{previewTotals.lineSum}</b> {settings.baseCurrency}
+            </div>
+            <div className="text-sm">
+              Service Charge: <b>{previewTotals.serviceChargeAmount}</b>{" "}
+              {settings.baseCurrency}
+            </div>
+            <div className="text-sm">
+              Tax: <b>{previewTotals.taxAmount}</b> {settings.baseCurrency}
+            </div>
+            <div className="text-base font-semibold">
+              Total: <b>{previewTotals.totalAmount}</b> {settings.baseCurrency}
+            </div>
           </div>
-          <Button type="submit" className="w-full mt-4">Create Invoice</Button>
-        </form>
-      )}
+        </div>
+      </section>
+
+      {/* Actions */}
+      <section className="flex gap-3">
+        <button
+          type="button"
+          className="px-4 py-2 rounded bg-primary text-primary-foreground disabled:opacity-50"
+          disabled={loading}
+          onClick={handleCreateDraft}
+        >
+          {loading ? "Saving..." : "Save Draft"}
+        </button>
+        <button
+          type="button"
+          className="px-4 py-2 rounded border"
+          onClick={() => router.back()}
+        >
+          Cancel
+        </button>
+      </section>
     </div>
   );
 }

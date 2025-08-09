@@ -1,4 +1,4 @@
-// app/dashboard/receptionist/invoices-v2/[id]/print/page.tsx
+// app/dashboard/receptionist/invoices/[id]/print/page.tsx
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
