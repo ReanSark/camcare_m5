@@ -3,8 +3,9 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { databases } from "@/lib/appwrite.config";
+import { account, databases } from "@/lib/appwrite.config";
 import { Query } from "appwrite";
+import type { Models } from "appwrite";
 import { COLLECTIONS } from "@/lib/collections";
 import { DATABASE_ID } from "@/config/env";
 import type {
@@ -54,6 +55,7 @@ export default function EditInvoicePage() {
 
   const [loading, setLoading] = useState<boolean>(true);
   const [finalizing, setFinalizing] = useState<boolean>(false);
+  const [me, setMe] = useState<{ $id: string; name?: string | null } | null>(null);
 
   const [settings, setSettings] = useState<SettingsPreview>(FALLBACK_SETTINGS);
   const [invoice, setInvoice] = useState<Invoice | null>(null);
@@ -123,7 +125,15 @@ export default function EditInvoicePage() {
   }, [invoiceId]);
 
   useEffect(() => {
-    fetchAll();
+    (async () => {
+      try {
+        const user: Models.User<Models.Preferences> = await account.get();
+        setMe({ $id: user.$id, name: user.name });
+      } catch {
+        setMe(null);
+      }
+      fetchAll();
+    })();
   }, [fetchAll]);
 
   const previewTotals = useMemo(() => {
@@ -186,6 +196,40 @@ export default function EditInvoicePage() {
     }
   }
 
+  async function voidInvoice() {
+    if (!invoice || !me?.$id) return;
+    const reason = prompt("Reason for voiding? (required)") || "";
+    if (!reason.trim()) return;
+    const res = await fetch(`/api/invoices/${invoice.$id}/void`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: me.$id, reason }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data?.error || "Void failed");
+      return;
+    }
+    await fetchAll();
+    alert("Invoice voided.");
+  }
+
+  async function toggleArchive(nextVal: boolean) {
+    if (!invoice || !me?.$id) return;
+    const reason = prompt(nextVal ? "Reason to archive? (optional)" : "Reason to unarchive? (optional)") || "";
+    const res = await fetch(`/api/invoices/${invoice.$id}/archive`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: me.$id, archived: nextVal, reason }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data?.error || "Archive toggle failed");
+      return;
+    }
+    await fetchAll();
+  }
+
   if (loading || !invoice) {
     return (
       <div className="p-6">
@@ -226,6 +270,23 @@ export default function EditInvoicePage() {
             title={canFinalize ? "Finalize invoice" : "Add items before finalizing"}
           >
             {finalizing ? "Finalizing…" : "Finalize"}
+          </button>
+          <button
+            type="button"
+            className="px-4 py-2 rounded border disabled:opacity-50"
+            disabled={!invoice || invoice.docStatus !== "final"}
+            onClick={voidInvoice}
+            title="Void invoice (final only)"
+          >
+            Void
+          </button>
+          <button
+            type="button"
+            className="px-4 py-2 rounded border"
+            onClick={() => toggleArchive(!(invoice?.isArchived ?? false))}
+            title={(invoice?.isArchived ? "Unarchive" : "Archive") + " invoice"}
+          >
+            {invoice?.isArchived ? "Unarchive" : "Archive"}
           </button>
           {invoice.docStatus === "final" && (
             <Link href={`/dashboard/receptionist/invoices-v2/${invoice.$id}/print`} className="px-4 py-2 rounded border">

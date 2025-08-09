@@ -28,6 +28,7 @@ export default function InvoicesV2ListPage() {
   const [docStatus, setDocStatus] = useState<InvoiceDocStatus | "all">("all");
   const [payStatus, setPayStatus] = useState<InvoicePaymentStatus | "all">("all");
   const [search, setSearch] = useState<string>("");
+  const [includeArchived, setIncludeArchived] = useState<boolean>(false);
 
   useEffect(() => {
     let mounted = true;
@@ -37,6 +38,7 @@ export default function InvoicesV2ListPage() {
         const q: string[] = [Query.orderDesc("createdAt"), Query.limit(50)];
         if (docStatus !== "all") q.push(Query.equal("docStatus", [docStatus]));
         if (payStatus !== "all") q.push(Query.equal("paymentStatus", [payStatus]));
+        if (!includeArchived) q.push(Query.equal("isArchived", [false]));
 
         const list = await databases.listDocuments(DATABASE_ID, COLLECTIONS.INVOICES, q);
         const docs = (list.documents as Models.Document[]) as unknown as Invoice[];
@@ -49,7 +51,7 @@ export default function InvoicesV2ListPage() {
     return () => {
       mounted = false;
     };
-  }, [docStatus, payStatus]);
+  }, [docStatus, payStatus, includeArchived]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -104,6 +106,14 @@ export default function InvoicesV2ListPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        <label className="flex items-center gap-2 ml-2 text-sm">
+          <input
+            type="checkbox"
+            checked={includeArchived}
+            onChange={(e) => setIncludeArchived(e.target.checked)}
+          />
+          Include archived
+        </label>
       </div>
 
       {/* Table */}
@@ -135,7 +145,10 @@ export default function InvoicesV2ListPage() {
               </tr>
             ) : (
               filtered.map((row) => (
-                <tr key={row.$id} className="border-b [&>td]:py-2 [&>td]:px-2">
+                <tr
+                  key={row.$id}
+                  className={`border-b [&>td]:py-2 [&>td]:px-2 ${row.isArchived ? "opacity-60" : ""}`}
+                >
                   <td className="font-medium">{row.invoiceNo || "—"}</td>
                   <td>
                     <div className="flex flex-col">
