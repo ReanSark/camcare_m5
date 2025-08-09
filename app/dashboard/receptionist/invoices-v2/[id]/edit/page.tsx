@@ -16,6 +16,7 @@ import type {
 } from "@/types";
 import { computeTotals, lineSubtotal } from "@/lib/totals";
 import PaymentsPanel from "@/components/invoices-v2/PaymentsPanel";
+import AttachmentsPanel from "@/components/invoices-v2/AttachmentsPanel";
 import Link from "next/link";
 
 type SettingsPreview = Pick<
@@ -305,7 +306,14 @@ export default function EditInvoicePage() {
           {invoice.currency || settings.baseCurrency}
         </div>
       </section>
-      {/* Payments */}
+        {/* Attachments */}
+        <section className="space-y-3">
+          <AttachmentsPanel
+            invoiceId={invoice.$id}
+            canEdit={invoice.docStatus === "final"}
+          />
+        </section>
+        {/* Payments */}
         <section className="space-y-3">
         <PaymentsPanel
             invoiceId={invoice.$id}
