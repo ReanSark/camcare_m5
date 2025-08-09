@@ -168,12 +168,17 @@ export default function InvoicesV2ListPage() {
                   </td>
                   <td className="text-right">
                     <a
-                      href={`/dashboard/receptionist/invoices-v2/${row.$id}/edit`}
+                      href={
+                        row.docStatus === "draft"
+                          ? `/dashboard/receptionist/invoices-v2/${row.$id}/edit`
+                          : `/dashboard/receptionist/invoices-v2/${row.$id}/view`
+                      }
                       className="text-primary hover:underline"
                     >
                       Open
                     </a>
                   </td>
+
                 </tr>
               ))
             )}
