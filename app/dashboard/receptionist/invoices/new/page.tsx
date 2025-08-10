@@ -1,7 +1,7 @@
 // app/dashboard/receptionist/invoices/new/page.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { databases, IDGen } from "@/lib/appwrite.config";
 import { COLLECTIONS } from "@/lib/collections";
@@ -27,6 +27,21 @@ type LabTestDoc = {
   $id: AppwriteID;
   name: string;
   price: number;
+};
+
+type ServiceDoc = {
+  $id: AppwriteID;
+  name: string;
+  basePrice: number;
+  taxable?: boolean | null;
+};
+
+type PharmacyProductDoc = {
+  $id: AppwriteID;
+  name: string;
+  price: number;
+  sku?: string | null;
+  taxable?: boolean | null;
 };
 
 type DraftItem = {
@@ -88,6 +103,7 @@ export default function NewInvoicePage() {
   const router = useRouter();
 
   // ---------- State ----------
+  const loadedRef = useRef(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [patients, setPatients] = useState<PatientDoc[]>([]);
   const [patientFilter, setPatientFilter] = useState<string>("");
@@ -101,6 +117,12 @@ export default function NewInvoicePage() {
   const [labTests, setLabTests] = useState<LabTestDoc[]>([]);
   const [labFilter, setLabFilter] = useState<string>("");
 
+  const [services, setServices] = useState<ServiceDoc[]>([]);
+  const [serviceFilter, setServiceFilter] = useState<string>("");
+
+  const [products, setProducts] = useState<PharmacyProductDoc[]>([]);
+  const [productFilter, setProductFilter] = useState<string>("");
+
   const [settings, setSettings] = useState<typeof FALLBACK_SETTINGS>(
     FALLBACK_SETTINGS
   );
@@ -108,6 +130,15 @@ export default function NewInvoicePage() {
   const [invoiceLevelDiscount, setInvoiceLevelDiscount] = useState<number>(0);
 
   const [items, setItems] = useState<DraftItem[]>([]);
+
+  const [manualForm, setManualForm] = useState({
+    name: "",
+    unit: 1,
+    price: 0,
+    discount: 0,
+    taxable: true,
+    groupLabel: "OTHER",
+  });
 
   // ---------- Effects: load data ----------
   useEffect(() => {
@@ -151,7 +182,29 @@ export default function NewInvoicePage() {
         setLabTests(rows);
       })
       .catch(() => setLabTests([]));
+
+    // Services (first page)
+    databases
+      .listDocuments(DATABASE_ID, COLLECTIONS.SERVICE_LIST, [])
+      .then((res) => {
+        const rows = (res.documents as unknown as ServiceDoc[]) || [];
+        setServices(rows);
+      })
+      .catch(() => setServices([]));
+
+    // Pharmacy products (first page)
+    databases
+      .listDocuments(DATABASE_ID, COLLECTIONS.PHARMACY_PRODUCTS, [])
+      .then((res) => {
+        const rows = (res.documents as unknown as PharmacyProductDoc[]) || [];
+        setProducts(rows);
+      })
+      .catch(() => setProducts([]));
+
   }, []);
+
+
+
 
   // ---------- Derived ----------
   const filteredPatients = useMemo(() => {
@@ -169,6 +222,21 @@ export default function NewInvoicePage() {
     const q = labFilter.toLowerCase();
     return labTests.filter((t) => t.name.toLowerCase().includes(q));
   }, [labTests, labFilter]);
+
+  const filteredServices = useMemo(() => {
+  if (!serviceFilter.trim()) return services;
+  const q = serviceFilter.toLowerCase();
+  return services.filter((s) => s.name.toLowerCase().includes(q));
+}, [services, serviceFilter]);
+
+const filteredProducts = useMemo(() => {
+  if (!productFilter.trim()) return products;
+  const q = productFilter.toLowerCase();
+  return products.filter(
+    (p) => p.name.toLowerCase().includes(q) || (p.sku ?? "").toLowerCase().includes(q)
+  );
+}, [products, productFilter]);
+
 
   const previewTotals = useMemo(() => {
     // convert DraftItem[] to InvoiceItem-like for computeTotals
@@ -216,6 +284,44 @@ export default function NewInvoicePage() {
     });
   }, [items, invoiceLevelDiscount, settings]);
 
+    function fallbackGroupLabel(type: DraftItem["type"], settings: typeof FALLBACK_SETTINGS): string {
+    if (type === "lab") return settings.labSectionLabel ?? "LAB";
+    if (type === "service") return "SERVICE";
+    if (type === "pharmacy") return "PHARMACY";
+    return "OTHER";
+  }
+
+  // Combine by (type, refId) for catalog-backed lines (service/pharmacy/lab).
+// Manual lines are *not* combined (safer for free-form entries).
+function upsertDraftItem(prev: DraftItem[], incoming: DraftItem): DraftItem[] {
+  const isCatalog =
+    (incoming.type === "service" || incoming.type === "pharmacy" || incoming.type === "lab") &&
+    !!incoming.refId;
+
+  if (isCatalog) {
+    const idx = prev.findIndex(
+      (it) => it.type === incoming.type && it.refId === incoming.refId
+    );
+    if (idx >= 0) {
+      const existing = prev[idx];
+      const merged: DraftItem = {
+        ...existing,
+        // increment unit; keep existing price/discount/group/taxable
+        unit: Math.max(1, (existing.unit || 1) + (incoming.unit || 1)),
+      };
+      const next = prev.slice();
+      next[idx] = merged;
+      return next;
+    }
+  }
+
+  // append as a new row
+  const displayOrder = incoming.displayOrder ?? prev.length + 1;
+  return [...prev, { ...incoming, displayOrder }];
+}
+
+
+
   // ---------- Handlers ----------
   const handleSelectPatient = (id: AppwriteID) => {
     setPatientId(id);
@@ -233,9 +339,8 @@ export default function NewInvoicePage() {
     const taxableDefault =
       settings.nonTaxableTypes?.includes("lab") ? false : settings.defaultItemTaxable;
 
-    setItems((prev) => [
-      ...prev,
-      {
+    setItems((prev) =>
+    upsertDraftItem(prev, {
         type: "lab",
         refId: t.$id,
         name: t.name,
@@ -246,8 +351,78 @@ export default function NewInvoicePage() {
         groupLabel: settings.labSectionLabel ?? "LAB",
         displayOrder: prev.length + 1,
       },
-    ]);
+    ));
   };
+
+  // Add a SERVICE line from catalog row
+const addService = (svc: ServiceDoc) => {
+  const taxableDefault =
+    svc.taxable ?? settings.defaultItemTaxable; // services usually taxable
+  setItems((prev) =>
+    upsertDraftItem(prev, {
+      type: "service",
+      refId: svc.$id,
+      name: svc.name,
+      price: Number(svc.basePrice) || 0,
+      unit: 1,
+      discount: 0,
+      taxable: !!taxableDefault,
+      groupLabel: "SERVICE",
+      displayOrder: prev.length + 1,
+    },
+  ));
+};
+
+// Add a PHARMACY line from catalog row
+const addPharmacy = (p: PharmacyProductDoc) => {
+  const taxableDefault =
+    p.taxable ?? settings.defaultItemTaxable; // pharmacy usually taxable
+  setItems((prev) =>
+    upsertDraftItem(prev, {
+      type: "pharmacy",
+      refId: p.$id,
+      name: p.name, // (optionally include SKU in the UI label later)
+      price: Number(p.price) || 0,
+      unit: 1,
+      discount: 0,
+      taxable: !!taxableDefault,
+      groupLabel: "PHARMACY",
+      displayOrder: prev.length + 1,
+    },
+  ));
+};
+
+// Add a MANUAL free-form line (you'll call this from the manual UI later)
+const addManual = (args: {
+  name: string;
+  price: number;
+  unit?: number;
+  discount?: number;
+  taxable?: boolean;
+  groupLabel?: string;
+}) => {
+  const unit = Math.max(1, Number(args.unit ?? 1));
+  const price = Math.max(0, Number(args.price) || 0);
+  const discount = Math.max(0, Number(args.discount ?? 0));
+  const taxableDefault =
+    typeof args.taxable === "boolean" ? args.taxable : settings.defaultItemTaxable;
+
+  setItems((prev) => [
+    ...prev,
+    {
+      type: "manual",
+      refId: null,
+      name: args.name.trim(),
+      price,
+      unit,
+      discount,
+      taxable: !!taxableDefault,
+      groupLabel: args.groupLabel || "OTHER",
+      displayOrder: prev.length + 1,
+    },
+  ]);
+};
+
 
   const removeItem = (index: number) => {
     setItems((prev) =>
@@ -273,7 +448,7 @@ export default function NewInvoicePage() {
       return;
     }
     if (items.length === 0) {
-      alert("Please add at least one item (Lab test).");
+      alert("Please add at least one item (Lab, Service, Pharmacy, or Manual).");
       return;
     }
 
@@ -303,7 +478,7 @@ export default function NewInvoicePage() {
       const invoiceId = (invDoc as { $id: AppwriteID }).$id;
 
       // 2) Create items
-      const promises = items.map((it) =>
+      const promises = items.map((it, idx) =>
         databases.createDocument(
           DATABASE_ID,
           COLLECTIONS.INVOICE_ITEMS,
@@ -323,8 +498,8 @@ export default function NewInvoicePage() {
               ...(it as unknown as InvoiceItem),
               invoiceId,
             }),
-            displayOrder: it.displayOrder ?? 0,
-            groupLabel: it.groupLabel ?? "LAB",
+            displayOrder: it.displayOrder ?? idx + 1,
+            groupLabel: it.groupLabel ?? fallbackGroupLabel(it.type, settings),
             taxable:
               it.taxable !== undefined
                 ? it.taxable
@@ -414,6 +589,152 @@ export default function NewInvoicePage() {
           ))}
         </div>
       </section>
+
+      <section className="space-y-3">
+  <h2 className="text-lg font-medium">SERVICE — Add items</h2>
+  <div className="flex gap-3 items-center">
+    <input
+      className="border rounded px-3 py-2 w-64"
+      placeholder="Search service by name"
+      value={serviceFilter}
+      onChange={(e) => setServiceFilter(e.target.value)}
+    />
+  </div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+    {filteredServices.map((s) => (
+      <button
+        key={s.$id}
+        type="button"
+        onClick={() => addService(s)}
+        className="border rounded px-3 py-2 text-left hover:bg-accent"
+        title="Add service"
+      >
+        <div className="font-medium">{s.name}</div>
+        <div className="text-sm text-muted-foreground">
+          {Number(s.basePrice) || 0} {settings.baseCurrency}
+        </div>
+      </button>
+    ))}
+    {filteredServices.length === 0 && (
+      <div className="text-sm text-muted-foreground">No services found.</div>
+    )}
+  </div>
+</section>
+
+<section className="space-y-3">
+  <h2 className="text-lg font-medium">PHARMACY — Add products</h2>
+  <div className="flex gap-3 items-center">
+    <input
+      className="border rounded px-3 py-2 w-64"
+      placeholder="Search product by name or SKU"
+      value={productFilter}
+      onChange={(e) => setProductFilter(e.target.value)}
+    />
+  </div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+    {filteredProducts.map((p) => (
+      <button
+        key={p.$id}
+        type="button"
+        onClick={() => addPharmacy(p)}
+        className="border rounded px-3 py-2 text-left hover:bg-accent"
+        title="Add product"
+      >
+        <div className="font-medium">{p.name}</div>
+        <div className="text-sm text-muted-foreground">
+          {Number(p.price) || 0} {settings.baseCurrency}
+          {p.sku ? ` • ${p.sku}` : ""}
+        </div>
+      </button>
+    ))}
+    {filteredProducts.length === 0 && (
+      <div className="text-sm text-muted-foreground">No products found.</div>
+    )}
+  </div>
+</section>
+
+<section className="space-y-3">
+  <h2 className="text-lg font-medium">Manual item</h2>
+  <div className="grid grid-cols-1 sm:grid-cols-6 gap-3">
+    <div className="sm:col-span-2">
+      <label className="block text-xs mb-1">Name</label>
+      <input
+        className="border rounded px-2 py-1 w-full"
+        value={manualForm.name}
+        onChange={(e) => setManualForm({ ...manualForm, name: e.target.value })}
+        placeholder="e.g., Consultation fee"
+      />
+    </div>
+    <div>
+      <label className="block text-xs mb-1">Unit</label>
+      <input
+        type="number"
+        min={1}
+        className="border rounded px-2 py-1 w-full"
+        value={manualForm.unit}
+        onChange={(e) =>
+          setManualForm({ ...manualForm, unit: Math.max(1, Number(e.target.value) || 1) })
+        }
+      />
+    </div>
+    <div>
+      <label className="block text-xs mb-1">Price</label>
+      <input
+        type="number"
+        min={0}
+        className="border rounded px-2 py-1 w-full"
+        value={manualForm.price}
+        onChange={(e) =>
+          setManualForm({ ...manualForm, price: Math.max(0, Number(e.target.value) || 0) })
+        }
+      />
+    </div>
+    <div>
+      <label className="block text-xs mb-1">Discount</label>
+      <input
+        type="number"
+        min={0}
+        className="border rounded px-2 py-1 w-full"
+        value={manualForm.discount}
+        onChange={(e) =>
+          setManualForm({ ...manualForm, discount: Math.max(0, Number(e.target.value) || 0) })
+        }
+      />
+    </div>
+    <div>
+      <label className="block text-xs mb-1">Group</label>
+      <input
+        className="border rounded px-2 py-1 w-full"
+        value={manualForm.groupLabel}
+        onChange={(e) => setManualForm({ ...manualForm, groupLabel: e.target.value || "OTHER" })}
+      />
+    </div>
+    <label className="flex items-center gap-2">
+      <input
+        type="checkbox"
+        checked={manualForm.taxable}
+        onChange={(e) => setManualForm({ ...manualForm, taxable: e.target.checked })}
+      />
+      Taxable
+    </label>
+  </div>
+  <div className="flex gap-2">
+    <button
+      type="button"
+      className="px-3 py-1 rounded border"
+      onClick={() => {
+        if (!manualForm.name.trim()) {
+          alert("Item name is required");
+          return;
+        }
+        addManual(manualForm);
+        setManualForm({ ...manualForm, name: "", unit: 1, price: 0, discount: 0 });
+      }}
+    >
+      Add Manual Item
+    </button>
+  </div>
+</section>
 
       {/* Items table */}
       <section className="space-y-3">

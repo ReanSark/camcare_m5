@@ -1,5 +1,31 @@
 // types/index.ts
 
+export type Service = {
+  $id: AppwriteID;
+  name: string;
+  basePrice: number;
+  description?: string | null;
+  category?: string | null;
+  taxable?: boolean | null;
+  isActive?: boolean | null;
+  tags?: string[] | null;
+  createdAt?: string | null;
+  createdBy?: string | null;
+};
+
+export type PharmacyProduct = {
+  $id: AppwriteID;
+  name: string;
+  price: number;
+  sku?: string | null;
+  description?: string | null;
+  taxable?: boolean | null;
+  isActive?: boolean | null;
+  createdAt?: string | null;
+  createdBy?: string | null;
+};
+
+
 // Patient
 export interface Patient {
   $id: string; // Appwrite Document ID
