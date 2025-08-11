@@ -540,310 +540,362 @@ export default function NewInvoicePage() {
 
   // ---------- UI ----------
   return (
-  <div className="p-6 space-y-6">
-    {/* Page title */}
-    <h1 className="text-2xl font-semibold">New Invoice (v2)</h1>
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-semibold">New Invoice (v2)</h1>
 
-    {/* =========================
-        PATIENT SELECTOR
-        - Search by name/phone (client-side filter)
-        - Select sets patientId and captures a snapshot (name/phone/dob)
-       ========================= */}
-    <section className="space-y-3">
-      <h2 className="text-lg font-medium">Patient</h2>
-      <div className="flex gap-3 items-center">
-        {/* Patient search box (filters the dropdown below) */}
-        <input
-          className="border rounded px-3 py-2 w-64"
-          placeholder="Search patient by name or phone"
-          value={patientFilter}
-          onChange={(e) => setPatientFilter(e.target.value)}
-        />
-        {/* Patient dropdown (binds to handleSelectPatient via onChange in your code) */}
-        <select
-          className="border rounded px-3 py-2 w-72"
-          /* value + onChange already wired in your code */
-        >
-          {/* Options are mapped from filteredPatients; the first empty option lets user clear selection */}
-          {/* ... */}
-        </select>
-      </div>
-    </section>
-
-    {/* =========================
-        LAB PICKER
-        - Quick search over lab tests
-        - Clicking a card calls addLabTest (deduped; bumps unit)
-       ========================= */}
-    <section className="space-y-3">
-      <h2 className="text-lg font-medium">
-        {/* Uses settings.labSectionLabel when available */}
-        {settings.labSectionLabel ?? "LAB"} — Add tests
-      </h2>
-
-      {/* Filter for lab tests */}
-      <div className="flex gap-3 items-center">
-        <input
-          className="border rounded px-3 py-2 w-64"
-          placeholder="Search lab test"
-          value={labFilter}
-          onChange={(e) => setLabFilter(e.target.value)}
-        />
-      </div>
-
-      {/* Lab results as clickable cards (each onClick → addLabTest) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {/* {filteredLabTests.map(...)} renders name + price */}
-        {/* ... */}
-      </div>
-    </section>
-
-    {/* =========================
-        SERVICE PICKER
-        - Mirrors LAB UI
-        - Clicking calls addService (deduped; bumps unit)
-       ========================= */}
-    <section className="space-y-3">
-      <h2 className="text-lg font-medium">SERVICE — Add items</h2>
-
-      {/* Search services by name */}
-      <div className="flex gap-3 items-center">
-        <input
-          className="border rounded px-3 py-2 w-64"
-          placeholder="Search service by name"
-          value={serviceFilter}
-          onChange={(e) => setServiceFilter(e.target.value)}
-        />
-      </div>
-
-      {/* Service cards (onClick → addService) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {/* {filteredServices.map(...)} renders name + basePrice */}
-        {/* ... */}
-      </div>
-    </section>
-
-    {/* =========================
-        PHARMACY PICKER
-        - Mirrors SERVICE UI
-        - Clicking calls addPharmacy (deduped; bumps unit)
-       ========================= */}
-    <section className="space-y-3">
-      <h2 className="text-lg font-medium">PHARMACY — Add products</h2>
-
-      {/* Search products by name or SKU */}
-      <div className="flex gap-3 items-center">
-        <input
-          className="border rounded px-3 py-2 w-64"
-          placeholder="Search product by name or SKU"
-          value={productFilter}
-          onChange={(e) => setProductFilter(e.target.value)}
-        />
-      </div>
-
-      {/* Product cards (onClick → addPharmacy) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {/* {filteredProducts.map(...)} renders name + price (+ SKU if present) */}
-        {/* ... */}
-      </div>
-    </section>
-
-    {/* =========================
-        MANUAL ITEM ADDER
-        - Free-form row (not deduped)
-        - addManual(args) pushes a new DraftItem
-       ========================= */}
-    <section className="space-y-3">
-      <h2 className="text-lg font-medium">Manual item</h2>
-
-      {/* Inline form: name, unit, price, discount, group, taxable */}
-      <div className="grid grid-cols-1 sm:grid-cols-6 gap-3">
-        {/* Name */}
-        <div className="sm:col-span-2">
-          <label className="block text-xs mb-1">Name</label>
+      {/* Patient selector */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-medium">Patient</h2>
+        <div className="flex gap-3 items-center">
           <input
-            className="border rounded px-2 py-1 w-full"
-            value={manualForm.name}
-            onChange={(e) => setManualForm({ ...manualForm, name: e.target.value })}
-            placeholder="e.g., Consultation fee"
+            className="border rounded px-3 py-2 w-64"
+            placeholder="Search patient by name or phone"
+            value={patientFilter}
+            onChange={(e) => setPatientFilter(e.target.value)}
+          />
+          <select
+            className="border rounded px-3 py-2 w-72"
+            value={patientId}
+            onChange={(e) => handleSelectPatient(e.target.value as AppwriteID)}
+          >
+            <option value="">— Select Patient —</option>
+            {filteredPatients.map((p) => (
+              <option key={p.$id} value={p.$id}>
+                {p.fullName} {p.phone ? `• ${p.phone}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+        {patientId && (
+          <div className="text-sm text-muted-foreground">
+            Snapshot will save: <b>{patientSnapshot.name}</b>
+            {patientSnapshot.phone ? ` • ${patientSnapshot.phone}` : ""}{" "}
+            {patientSnapshot.dob ? ` • DOB: ${patientSnapshot.dob}` : ""}
+          </div>
+        )}
+      </section>
+
+      {/* Lab tests picker */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-medium">
+          {settings.labSectionLabel ?? "LAB"} — Add tests
+        </h2>
+        <div className="flex gap-3 items-center">
+          <input
+            className="border rounded px-3 py-2 w-64"
+            placeholder="Search lab test"
+            value={labFilter}
+            onChange={(e) => setLabFilter(e.target.value)}
           />
         </div>
-        {/* Unit */}
-        <div>
-          <label className="block text-xs mb-1">Unit</label>
-          <input
-            type="number"
-            min={1}
-            className="border rounded px-2 py-1 w-full"
-            value={manualForm.unit}
-            onChange={(e) =>
-              setManualForm({ ...manualForm, unit: Math.max(1, Number(e.target.value) || 1) })
-            }
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {filteredLabTests.map((t) => (
+            <button
+              key={t.$id}
+              type="button"
+              onClick={() => addLabTest(t)}
+              className="border rounded px-3 py-2 text-left hover:bg-accent"
+              title="Add test"
+            >
+              <div className="font-medium">{t.name}</div>
+              <div className="text-sm text-muted-foreground">
+                {Number(t.price) || 0} {settings.baseCurrency}
+              </div>
+            </button>
+          ))}
         </div>
-        {/* Price */}
-        <div>
-          <label className="block text-xs mb-1">Price</label>
+      </section>
+
+      <section className="space-y-3">
+  <h2 className="text-lg font-medium">SERVICE — Add items</h2>
+  <div className="flex gap-3 items-center">
+    <input
+      className="border rounded px-3 py-2 w-64"
+      placeholder="Search service by name"
+      value={serviceFilter}
+      onChange={(e) => setServiceFilter(e.target.value)}
+    />
+  </div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+    {filteredServices.map((s) => (
+      <button
+        key={s.$id}
+        type="button"
+        onClick={() => addService(s)}
+        className="border rounded px-3 py-2 text-left hover:bg-accent"
+        title="Add service"
+      >
+        <div className="font-medium">{s.name}</div>
+        <div className="text-sm text-muted-foreground">
+          {Number(s.basePrice) || 0} {settings.baseCurrency}
+        </div>
+      </button>
+    ))}
+    {filteredServices.length === 0 && (
+      <div className="text-sm text-muted-foreground">No services found.</div>
+    )}
+  </div>
+</section>
+
+<section className="space-y-3">
+  <h2 className="text-lg font-medium">PHARMACY — Add products</h2>
+  <div className="flex gap-3 items-center">
+    <input
+      className="border rounded px-3 py-2 w-64"
+      placeholder="Search product by name or SKU"
+      value={productFilter}
+      onChange={(e) => setProductFilter(e.target.value)}
+    />
+  </div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+    {filteredProducts.map((p) => (
+      <button
+        key={p.$id}
+        type="button"
+        onClick={() => addPharmacy(p)}
+        className="border rounded px-3 py-2 text-left hover:bg-accent"
+        title="Add product"
+      >
+        <div className="font-medium">{p.name}</div>
+        <div className="text-sm text-muted-foreground">
+          {Number(p.price) || 0} {settings.baseCurrency}
+          {p.sku ? ` • ${p.sku}` : ""}
+        </div>
+      </button>
+    ))}
+    {filteredProducts.length === 0 && (
+      <div className="text-sm text-muted-foreground">No products found.</div>
+    )}
+  </div>
+</section>
+
+<section className="space-y-3">
+  <h2 className="text-lg font-medium">Manual item</h2>
+  <div className="grid grid-cols-1 sm:grid-cols-6 gap-3">
+    <div className="sm:col-span-2">
+      <label className="block text-xs mb-1">Name</label>
+      <input
+        className="border rounded px-2 py-1 w-full"
+        value={manualForm.name}
+        onChange={(e) => setManualForm({ ...manualForm, name: e.target.value })}
+        placeholder="e.g., Consultation fee"
+      />
+    </div>
+    <div>
+      <label className="block text-xs mb-1">Unit</label>
+      <input
+        type="number"
+        min={1}
+        className="border rounded px-2 py-1 w-full"
+        value={manualForm.unit}
+        onChange={(e) =>
+          setManualForm({ ...manualForm, unit: Math.max(1, Number(e.target.value) || 1) })
+        }
+      />
+    </div>
+    <div>
+      <label className="block text-xs mb-1">Price</label>
+      <input
+        type="number"
+        min={0}
+        className="border rounded px-2 py-1 w-full"
+        value={manualForm.price}
+        onChange={(e) =>
+          setManualForm({ ...manualForm, price: Math.max(0, Number(e.target.value) || 0) })
+        }
+      />
+    </div>
+    <div>
+      <label className="block text-xs mb-1">Discount</label>
+      <input
+        type="number"
+        min={0}
+        className="border rounded px-2 py-1 w-full"
+        value={manualForm.discount}
+        onChange={(e) =>
+          setManualForm({ ...manualForm, discount: Math.max(0, Number(e.target.value) || 0) })
+        }
+      />
+    </div>
+    <div>
+      <label className="block text-xs mb-1">Group</label>
+      <input
+        className="border rounded px-2 py-1 w-full"
+        value={manualForm.groupLabel}
+        onChange={(e) => setManualForm({ ...manualForm, groupLabel: e.target.value || "OTHER" })}
+      />
+    </div>
+    <label className="flex items-center gap-2">
+      <input
+        type="checkbox"
+        checked={manualForm.taxable}
+        onChange={(e) => setManualForm({ ...manualForm, taxable: e.target.checked })}
+      />
+      Taxable
+    </label>
+  </div>
+  <div className="flex gap-2">
+    <button
+      type="button"
+      className="px-3 py-1 rounded border"
+      onClick={() => {
+        if (!manualForm.name.trim()) {
+          alert("Item name is required");
+          return;
+        }
+        addManual(manualForm);
+        setManualForm({ ...manualForm, name: "", unit: 1, price: 0, discount: 0 });
+      }}
+    >
+      Add Manual Item
+    </button>
+  </div>
+</section>
+
+      {/* Items table */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-medium">Items</h2>
+        {items.length === 0 ? (
+          <div className="text-sm text-muted-foreground">No items yet.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left border-b">
+                <tr className="[&>th]:py-2 [&>th]:px-2">
+                  <th>Type</th>
+                  <th>Name</th>
+                  <th className="w-24">Unit</th>
+                  <th className="w-28">Price</th>
+                  <th className="w-28">Discount</th>
+                  <th className="w-24">Taxable</th>
+                  <th className="w-28 text-right">Subtotal</th>
+                  <th className="w-16"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((row, idx) => {
+                  const sub = lineSubtotal({
+                    ...(row as unknown as InvoiceItem),
+                    invoiceId: "" as AppwriteID,
+                  });
+                  return (
+                    <tr key={idx} className="border-b [&>td]:py-2 [&>td]:px-2">
+                      <td className="uppercase">{row.type}</td>
+                      <td>{row.name}</td>
+                      <td>
+                        <input
+                          type="number"
+                          min={1}
+                          className="border rounded px-2 py-1 w-20"
+                          value={row.unit}
+                          onChange={(e) =>
+                            updateItem(idx, "unit", Math.max(1, Number(e.target.value) || 1))
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          min={0}
+                          className="border rounded px-2 py-1 w-24"
+                          value={row.price}
+                          onChange={(e) =>
+                            updateItem(idx, "price", Math.max(0, Number(e.target.value) || 0))
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          min={0}
+                          className="border rounded px-2 py-1 w-24"
+                          value={row.discount ?? 0}
+                          onChange={(e) =>
+                            updateItem(idx, "discount", Math.max(0, Number(e.target.value) || 0))
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={
+                            row.taxable !== undefined
+                              ? row.taxable
+                              : settings.defaultItemTaxable
+                          }
+                          onChange={(e) => updateItem(idx, "taxable", e.target.checked)}
+                        />
+                      </td>
+                      <td className="text-right">
+                        {sub} {settings.baseCurrency}
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="text-destructive hover:underline"
+                          onClick={() => removeItem(idx)}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Invoice-level discount & totals */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-4">
+          <label className="text-sm">Invoice Discount</label>
           <input
             type="number"
             min={0}
-            className="border rounded px-2 py-1 w-full"
-            value={manualForm.price}
+            className="border rounded px-3 py-2 w-40"
+            value={invoiceLevelDiscount}
             onChange={(e) =>
-              setManualForm({ ...manualForm, price: Math.max(0, Number(e.target.value) || 0) })
+              setInvoiceLevelDiscount(Math.max(0, Number(e.target.value) || 0))
             }
           />
+          <div className="ml-auto text-right space-y-1">
+            <div className="text-sm">
+              Line Sum: <b>{previewTotals.lineSum}</b> {settings.baseCurrency}
+            </div>
+            <div className="text-sm">
+              Service Charge: <b>{previewTotals.serviceChargeAmount}</b>{" "}
+              {settings.baseCurrency}
+            </div>
+            <div className="text-sm">
+              Tax: <b>{previewTotals.taxAmount}</b> {settings.baseCurrency}
+            </div>
+            <div className="text-base font-semibold">
+              Total: <b>{previewTotals.totalAmount}</b> {settings.baseCurrency}
+            </div>
+          </div>
         </div>
-        {/* Discount */}
-        <div>
-          <label className="block text-xs mb-1">Discount</label>
-          <input
-            type="number"
-            min={0}
-            className="border rounded px-2 py-1 w-full"
-            value={manualForm.discount}
-            onChange={(e) =>
-              setManualForm({
-                ...manualForm,
-                discount: Math.max(0, Number(e.target.value) || 0),
-              })
-            }
-          />
-        </div>
-        {/* Group label (visual grouping in tables/print) */}
-        <div>
-          <label className="block text-xs mb-1">Group</label>
-          <input
-            className="border rounded px-2 py-1 w-full"
-            value={manualForm.groupLabel}
-            onChange={(e) =>
-              setManualForm({ ...manualForm, groupLabel: e.target.value || "OTHER" })
-            }
-          />
-        </div>
-        {/* Taxable toggle */}
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={manualForm.taxable}
-            onChange={(e) => setManualForm({ ...manualForm, taxable: e.target.checked })}
-          />
-          Taxable
-        </label>
-      </div>
+      </section>
 
-      {/* Add manual item button → addManual(manualForm) then reset form */}
-      <div className="flex gap-2">
+      {/* Actions */}
+      <section className="flex gap-3">
         <button
           type="button"
-          className="px-3 py-1 rounded border"
-          onClick={() => {
-            if (!manualForm.name.trim()) {
-              alert("Item name is required");
-              return;
-            }
-            addManual(manualForm);
-            setManualForm({ ...manualForm, name: "", unit: 1, price: 0, discount: 0 });
-          }}
+          className="px-4 py-2 rounded bg-primary text-primary-foreground disabled:opacity-50"
+          disabled={loading}
+          onClick={handleCreateDraft}
         >
-          Add Manual Item
+          {loading ? "Saving..." : "Save Draft"}
         </button>
-      </div>
-    </section>
-
-    {/* =========================
-        CURRENT DRAFT ITEMS TABLE
-        - Shows what will be saved as InvoiceItems
-        - Each row is editable (unit/price/discount/taxable), remove button calls removeItem(idx)
-       ========================= */}
-    <section className="space-y-3">
-      <h2 className="text-lg font-medium">Items</h2>
-
-      {/* Only render table when there are rows */}
-      {items.length > 0 && (
-        <div className="overflow-auto border rounded">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="text-left px-3 py-2 w-28">Type</th>
-                <th className="text-left px-3 py-2">Name</th>
-                <th className="text-right px-3 py-2 w-20">Unit</th>
-                <th className="text-right px-3 py-2 w-28">Price</th>
-                <th className="text-right px-3 py-2 w-28">Discount</th>
-                <th className="text-center px-3 py-2 w-24">Taxable</th>
-                <th className="text-right px-3 py-2 w-28">Subtotal</th>
-                <th className="px-3 py-2 w-24" />
-              </tr>
-            </thead>
-            <tbody>
-              {/* Map each DraftItem to a row with inputs bound to updateItem(idx, key, value) */}
-              {/* ... */}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-
-    {/* =========================
-        INVOICE-LEVEL DISCOUNT & PREVIEW TOTALS
-        - invoiceLevelDiscount applies after line discounts
-        - previewTotals recalculated from items + settings
-       ========================= */}
-    <section className="space-y-3">
-      <div className="flex items-center gap-4">
-        {/* Invoice-level flat discount input */}
-        <label className="text-sm">Invoice Discount</label>
-        <input
-          type="number"
-          min={0}
-          className="border rounded px-3 py-2 w-40"
-          value={invoiceLevelDiscount}
-          onChange={(e) =>
-            setInvoiceLevelDiscount(Math.max(0, Number(e.target.value) || 0))
-          }
-        />
-      </div>
-
-      {/* Totals summary (preview only; persisted on finalize) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="text-sm">
-          Line Sum: <b>{previewTotals.lineSum}</b> {settings.baseCurrency}
-        </div>
-        <div className="text-sm">
-          Service Charge: <b>{previewTotals.serviceChargeAmount}</b>{" "}
-          {settings.baseCurrency}
-        </div>
-        <div className="text-sm">
-          Tax: <b>{previewTotals.taxAmount}</b> {settings.baseCurrency}
-        </div>
-        <div className="text-base font-semibold">
-          Total: <b>{previewTotals.totalAmount}</b> {settings.baseCurrency}
-        </div>
-      </div>
-    </section>
-
-    {/* =========================
-        ACTIONS
-        - Save Draft: creates Invoice + InvoiceItems, then navigates to Edit page
-        - Cancel: route back
-       ========================= */}
-    <section className="flex gap-3">
-      <button
-        type="button"
-        className="px-4 py-2 rounded bg-primary text-primary-foreground disabled:opacity-50"
-        disabled={loading}
-        onClick={handleCreateDraft}
-      >
-        {loading ? "Saving..." : "Save Draft"}
-      </button>
-      <button
-        type="button"
-        className="px-4 py-2 rounded border"
-        onClick={() => router.back()}
-      >
-        Cancel
-      </button>
-    </section>
-  </div>
-);
+        <button
+          type="button"
+          className="px-4 py-2 rounded border"
+          onClick={() => router.back()}
+        >
+          Cancel
+        </button>
+      </section>
+    </div>
+  );
 }
