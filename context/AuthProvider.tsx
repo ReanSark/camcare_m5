@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log("📄 AUTH: Using collection IDs from env:", {
         mvp_receptionists: COLLECTIONS.RECEPTIONISTS,
-        mvp_doctors: COLLECTIONS.DOCTORS,
+        doctors: COLLECTIONS.DOCTORS,
         mvp_pharmacists: COLLECTIONS.PHARMACISTS,
         labTechnicians: COLLECTIONS.LABTECHNICIANS,
       });

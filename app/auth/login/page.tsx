@@ -69,7 +69,7 @@ export default function LoginPage() {
       // 3. 🔍 Find the user’s role from specific MVP collections
       const roles = [
         process.env.NEXT_PUBLIC_MVP_RECEPTIONISTS_COLLECTION_ID!,
-        process.env.NEXT_PUBLIC_MVP_DOCTORS_COLLECTION_ID!,
+        process.env.NEXT_PUBLIC_DOCTORS_COLLECTION_ID!,
         process.env.NEXT_PUBLIC_MVP_PHARMACISTS_COLLECTION_ID!,
         process.env.NEXT_PUBLIC_LABTECHNICIANS_COLLECTION_ID!
       ];
