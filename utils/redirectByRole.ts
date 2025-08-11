@@ -6,8 +6,11 @@ import { useRouter } from "next/navigation";
 type Router = ReturnType<typeof useRouter>;
 
 const roleRoutes: Record<string, string> = {
+  Admin: "/dashboard/admin",
   Receptionist: "/dashboard/receptionist",
   Doctor: "/dashboard/doctor",
+  Nurse: "/dashboard/nurse",
+  InventoryStaff: "/dashboard/inventorystaff",
   Pharmacist: "/dashboard/pharmacist",
   LabTechnician: "/dashboard/labtechnician",
 };

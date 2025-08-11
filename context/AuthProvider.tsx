@@ -50,16 +50,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // 🔎 Role collections to scan for this user
       const roles = [
+        COLLECTIONS.ADMINS,
         COLLECTIONS.RECEPTIONISTS,
         COLLECTIONS.DOCTORS,
+        COLLECTIONS.NURSES,
+        COLLECTIONS.INVENTORYSTAFF,
         COLLECTIONS.PHARMACISTS,
         COLLECTIONS.LABTECHNICIANS
       ];
 
       console.log("📄 AUTH: Using collection IDs from env:", {
-        mvp_receptionists: COLLECTIONS.RECEPTIONISTS,
+        admins: COLLECTIONS.ADMINS,
+        receptionists: COLLECTIONS.RECEPTIONISTS,
         doctors: COLLECTIONS.DOCTORS,
-        mvp_pharmacists: COLLECTIONS.PHARMACISTS,
+        nurses: COLLECTIONS.NURSES,
+        inventoryStaff: COLLECTIONS.INVENTORYSTAFF,
+        pharmacists: COLLECTIONS.PHARMACISTS,
         labTechnicians: COLLECTIONS.LABTECHNICIANS,
       });
 
