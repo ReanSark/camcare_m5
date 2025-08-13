@@ -66,7 +66,7 @@ export default function LoginPage() {
       const userId = sessionUser.$id;
       console.log("👤 LOGINPAGE: Fetched session user:", sessionUser);
 
-      // 3. 🔍 Find the user’s role from specific MVP collections
+      // 3. 🔍 Find the user’s role from specific collections
       const roles = [
         process.env.NEXT_PUBLIC_ADMINS_COLLECTION_ID!,
         process.env.NEXT_PUBLIC_RECEPTIONISTS_COLLECTION_ID!,
