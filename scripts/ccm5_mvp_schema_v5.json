@@ -1,0 +1,1360 @@
+[
+  {
+    "name": "Services",
+    "attributes": [
+      { "key": "code", "type": "string", "required": true },
+      { "key": "name", "type": "string", "required": true },
+      { "key": "category", "type": "string" },
+      { "key": "basePrice", "type": "float", "required": true },
+      { "key": "taxable", "type": "boolean", "default": true },
+      { "key": "isActive", "type": "boolean", "default": true },
+      { "key": "displayOrder", "type": "integer" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "createdBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "CashSessions",
+    "attributes": [
+      { "key": "status", "type": "enum", "elements": ["open","closed"], "required": true },
+      { "key": "cashierUserId", "type": "string", "required": true },
+      { "key": "tillId", "type": "string" },
+
+      { "key": "openedAt", "type": "datetime", "required": true },
+      { "key": "openingFloat", "type": "float", "default": 0 },
+
+      { "key": "closedAt", "type": "datetime" },
+      { "key": "closingCashCount", "type": "float" },
+      { "key": "expectedCash", "type": "float" },
+      { "key": "variance", "type": "float" },
+
+      { "key": "notes", "type": "string", "size": 1000 },
+
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "createdBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "ClinicalAuditLogs",
+    "attributes": [
+      { "key": "entityType", "type": "enum",
+        "elements": ["encounter","diagnosis","imaging-order","imaging-result"], "required": true
+      },
+      { "key": "entityId", "type": "string", "required": true },
+
+      { "key": "action", "type": "enum",
+        "elements": ["create","update","status-change","sign","amend","void","add-attachment","remove-attachment"], "required": true
+      },
+      { "key": "changedFields", "type": "string[]" },
+      { "key": "oldValuesJson", "type": "string", "size": 4000 },
+      { "key": "newValuesJson", "type": "string", "size": 4000 },
+
+      { "key": "performedBy", "type": "string" },
+      { "key": "performedByRole", "type": "string" },
+      { "key": "createdAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "ClinicalAttachments",
+    "attributes": [
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "encounterId", "type": "string" },
+      { "key": "appointmentId", "type": "string" },
+
+      { "key": "type", "type": "enum", "elements": ["photo","scan","report","consent","other"], "default": "other" },
+      { "key": "title", "type": "string" },
+      { "key": "fileIds", "type": "string[]" },
+      { "key": "note", "type": "string", "size": 1000 },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "ImagingResults",
+    "attributes": [
+      { "key": "imagingOrderId", "type": "string", "required": true },
+
+      { "key": "reportedBy", "type": "string" },
+      { "key": "reportedAt", "type": "datetime" },
+      { "key": "verifiedBy", "type": "string" },
+      { "key": "verifiedAt", "type": "datetime" },
+
+      { "key": "findings",  "type": "string", "size": 8000 },
+      { "key": "impression","type": "string", "size": 2000 },
+
+      { "key": "attachments", "type": "string[]" },  
+      { "key": "externalReportUrl", "type": "string" },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }, { "key": "updatedBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "ImagingOrders",
+    "attributes": [
+      { "key": "orderNo", "type": "string", "required": true },  
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "orderingDoctorId", "type": "string" },
+      { "key": "appointmentId", "type": "string" },
+
+      { "key": "modality", "type": "enum",
+        "elements": ["x-ray","ultrasound","ct","mri","mammography","fluoroscopy","echo","nuclear","interventional","other"] },
+      { "key": "bodyPart", "type": "string" },
+      { "key": "indications", "type": "string", "size": 1000 },
+
+      { "key": "priority", "type": "enum", "elements": ["routine","stat"], "default": "routine" },
+      { "key": "status", "type": "enum",
+        "elements": ["ordered","scheduled","performed","reported","canceled","sent-out","returned"], "default": "ordered" },
+
+      { "key": "orderedAt", "type": "datetime" },
+      { "key": "scheduledAt", "type": "datetime" },
+      { "key": "performedAt", "type": "datetime" },
+      { "key": "reportedAt", "type": "datetime" },
+
+      { "key": "sendOutLabName", "type": "string" },
+      { "key": "sendOutOrderNo", "type": "string" },
+      { "key": "shippedAt", "type": "datetime" },
+      { "key": "returnedAt", "type": "datetime" },
+
+      { "key": "notes", "type": "string", "size": 1000 },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }, { "key": "updatedBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "ProblemList",
+    "attributes": [
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "code", "type": "string" },                     
+      { "key": "description", "type": "string", "size": 500 },
+
+      { "key": "status", "type": "enum", "elements": ["active","resolved"], "default": "active" },
+      { "key": "startedAt", "type": "datetime" },
+      { "key": "resolvedAt", "type": "datetime" },
+      { "key": "lastReviewedAt", "type": "datetime" },
+      { "key": "lastReviewedBy", "type": "string" },
+
+      { "key": "note", "type": "string", "size": 1000 },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }, { "key": "updatedBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "Diagnoses",
+    "attributes": [
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "encounterId", "type": "string" },
+      { "key": "appointmentId", "type": "string" },
+      { "key": "doctorId", "type": "string" },
+
+      { "key": "type", "type": "enum", "elements": ["primary","secondary","rule-out","history"], "default": "primary" },
+      { "key": "code", "type": "string", "required": true },      
+      { "key": "description", "type": "string", "size": 500 },
+
+      { "key": "status", "type": "enum", "elements": ["active","resolved"], "default": "active" },
+      { "key": "onsetAt", "type": "datetime" },
+      { "key": "resolvedAt", "type": "datetime" },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "Encounters",
+    "attributes": [
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "appointmentId", "type": "string" },
+      { "key": "doctorId", "type": "string", "required": true },
+
+      { "key": "status", "type": "enum", "elements": ["draft","signed","amended","voided"], "default": "draft" },
+
+      { "key": "subjective", "type": "string", "size": 4000 },
+      { "key": "objective",  "type": "string", "size": 4000 },
+      { "key": "exam",       "type": "string", "size": 4000 },
+      { "key": "assessmentSummary", "type": "string", "size": 1000 },
+      { "key": "plan",       "type": "string", "size": 4000 },
+
+      { "key": "diagnosisCodes", "type": "string[]" },   
+      { "key": "vitalsId", "type": "string" },           
+
+      { "key": "signedBy", "type": "string" },
+      { "key": "signedAt", "type": "datetime" },
+      { "key": "amendedBy", "type": "string" },
+      { "key": "amendedAt", "type": "datetime" },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }, { "key": "updatedBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "NursingNotes",
+    "attributes": [
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "appointmentId", "type": "string" },
+
+      { "key": "noteType", "type": "enum",
+        "elements": ["progress","handover","education","discharge","procedure-note"], "default": "progress"
+      },
+      { "key": "content", "type": "string", "size": 4000, "required": true },
+
+      { "key": "recordedAt", "type": "datetime", "required": true },
+      { "key": "recordedBy", "type": "string" },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }, { "key": "updatedBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "MedicationAdministrations",
+    "attributes": [
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "appointmentId", "type": "string" },
+
+      { "key": "prescriptionItemId", "type": "string" },   
+      { "key": "productId", "type": "string" },            
+
+      { "key": "dose", "type": "string" },                
+      { "key": "route", "type": "enum",
+        "elements": ["oral","topical","ophthalmic","otic","nasal","inhalation","rectal","vaginal","transdermal","im","iv","sc","other"]
+      },
+      { "key": "frequency", "type": "string" },         
+      { "key": "scheduledAt", "type": "datetime" },
+      { "key": "givenAt", "type": "datetime" },
+
+      { "key": "status", "type": "enum",
+        "elements": ["scheduled","given","held","refused","missed","canceled"], "default": "scheduled"
+      },
+      { "key": "reasonIfNotGiven", "type": "string", "size": 300 },
+
+      { "key": "administeredBy", "type": "string" },     
+      { "key": "observedBy", "type": "string" },
+      { "key": "adverseEventNote", "type": "string", "size": 1000 },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }, { "key": "updatedBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "CareTasks",
+    "attributes": [
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "appointmentId", "type": "string" },
+
+      { "key": "taskType", "type": "enum",
+        "elements": ["triage","vitals","injection","iv-cannulation","phlebotomy","nebulization","dressing","wound-care","specimen-collection","procedure","other"],
+        "required": true
+      },
+      { "key": "title", "type": "string" },                     
+      { "key": "details", "type": "string", "size": 1000 },
+
+      { "key": "orderedByDoctorId", "type": "string" },
+      { "key": "assignedToNurseId", "type": "string" },
+
+      { "key": "priority", "type": "enum", "elements": ["low","normal","high","stat"], "default": "normal" },
+      { "key": "status", "type": "enum", "elements": ["queued","in-progress","completed","canceled","deferred"], "default": "queued" },
+
+      { "key": "scheduledAt", "type": "datetime" },
+      { "key": "startedAt", "type": "datetime" },
+      { "key": "completedAt", "type": "datetime" },
+      { "key": "canceledAt", "type": "datetime" },
+
+      { "key": "resultNote", "type": "string", "size": 1000 },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }, { "key": "updatedBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "Vitals",
+    "attributes": [
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "appointmentId", "type": "string" },
+      { "key": "recordedAt", "type": "datetime", "required": true },
+      { "key": "recordedBy", "type": "string" },
+
+      { "key": "systolic", "type": "integer" },
+      { "key": "diastolic", "type": "integer" },
+      { "key": "heartRate", "type": "integer" },
+      { "key": "respRate", "type": "integer" },
+      { "key": "tempC", "type": "float" },
+      { "key": "spo2", "type": "integer" },
+
+      { "key": "heightCm", "type": "float" },
+      { "key": "weightKg", "type": "float" },
+      { "key": "bmi", "type": "float" },
+
+      { "key": "painScore", "type": "integer" },
+      { "key": "gcs", "type": "integer" },
+      { "key": "acuity", "type": "enum", "elements": ["low","medium","high","critical"] },
+
+      { "key": "note", "type": "string", "size": 1000 },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "LabCriticalAlerts",
+    "attributes": [
+      { "key": "resultId",        "type": "string", "required": true },
+      { "key": "resultDetailId",  "type": "string" },
+
+      { "key": "flag", "type": "enum", "elements": ["critical"], "required": true },
+      { "key": "notifiedAt", "type": "datetime" },
+      { "key": "notifiedTo", "type": "string" },
+      { "key": "ackBy",      "type": "string" },
+      { "key": "ackAt",      "type": "datetime" },
+      { "key": "note",       "type": "string", "size": 500 },
+
+      { "key": "createdAt",  "type": "datetime" }, { "key": "createdBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "LabReferenceRanges",
+    "attributes": [
+      { "key": "testId", "type": "string", "required": true },   
+      { "key": "sex", "type": "enum", "elements": ["any","male","female"], "default": "any" },
+      { "key": "ageMinDays", "type": "integer" },
+      { "key": "ageMaxDays", "type": "integer" },
+
+      { "key": "low",  "type": "float" },
+      { "key": "high", "type": "float" },
+      { "key": "unit", "type": "string" },
+      { "key": "text", "type": "string", "size": 500 },          
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "LabSpecimens",
+    "attributes": [
+      { "key": "accessionNo", "type": "string", "required": true },  
+      { "key": "orderId",     "type": "string", "required": true },
+      { "key": "orderItemId", "type": "string" },
+
+      { "key": "specimenType", "type": "enum", "elements": ["blood","serum","plasma","urine","stool","swab","csf","sputum","other"], "required": true },
+
+      { "key": "collectedAt", "type": "datetime" },
+      { "key": "collectedBy", "type": "string" },
+      { "key": "receivedAt",  "type": "datetime" },
+      { "key": "receivedBy",  "type": "string" },
+
+      { "key": "status", "type": "enum", "elements": ["collected","received","rejected","disposed"], "default": "collected" },
+      { "key": "integrity", "type": "string" },            
+      { "key": "barcode", "type": "string" },
+      { "key": "storageLocation", "type": "string" },
+
+      { "key": "disposedAt", "type": "datetime" },
+      { "key": "disposeReason", "type": "string", "size": 300 },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }, { "key": "updatedBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "LabOrderItems",
+    "attributes": [
+      { "key": "orderId", "type": "string", "required": true },
+
+      { "key": "testId",   "type": "string" },                    
+      { "key": "testName", "type": "string", "required": true },  
+
+      { "key": "status", "type": "enum", "elements": ["ordered","canceled","in-progress","completed","sent-out","returned"], "default": "ordered" },
+
+      
+      { "key": "sendOutLabName", "type": "string" },
+      { "key": "sendOutOrderNo", "type": "string" },
+      { "key": "shippedAt",      "type": "datetime" },
+      { "key": "returnedAt",     "type": "datetime" },
+
+      { "key": "notes", "type": "string", "size": 500 },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "LabOrders",
+    "attributes": [
+      { "key": "orderNo", "type": "string", "required": true },   
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "orderingDoctorId", "type": "string" },
+      { "key": "appointmentId", "type": "string" },
+
+      { "key": "priority", "type": "enum", "elements": ["routine","stat"], "default": "routine" },
+      { "key": "status",   "type": "enum", "elements": ["ordered","collected","received","in-progress","completed","canceled","sent-out","returned"], "default": "ordered" },
+
+      { "key": "orderedAt",   "type": "datetime" },
+      { "key": "collectedAt", "type": "datetime" },
+      { "key": "receivedAt",  "type": "datetime" },
+      { "key": "completedAt", "type": "datetime" },
+
+      { "key": "notes", "type": "string", "size": 1000 },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }, { "key": "updatedBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "PharmacyChecks",
+    "attributes": [
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "prescriptionId", "type": "string" },
+      { "key": "dispenseId", "type": "string" },
+
+      { "key": "type", "type": "enum",
+        "elements": ["allergy","interaction","duplicate-therapy","dose-check"] },
+
+      { "key": "result", "type": "enum",
+        "elements": ["clear","warning-overridden","blocked"] },
+
+      { "key": "note", "type": "string", "size": 1000 },
+      { "key": "checkedBy", "type": "string" },
+      { "key": "checkedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "DispenseItems",
+    "attributes": [
+      { "key": "dispenseId", "type": "string", "required": true },
+      { "key": "prescriptionItemId", "type": "string" },
+
+      { "key": "productId", "type": "string", "required": true },
+      { "key": "batchId", "type": "string" },            
+      { "key": "qtyDispensed", "type": "integer", "required": true },
+
+      { "key": "unitPrice", "type": "float" },         
+      { "key": "taxable", "type": "boolean", "default": true },
+      { "key": "lineTotal", "type": "float" },
+
+      { "key": "substitution", "type": "enum", "elements": ["none","generic","brand"], "default": "none" },
+      { "key": "substitutedProductId", "type": "string" },
+
+      { "key": "labelSig",            "type": "string",  "size": 1000 },
+      { "key": "substitutionReason",  "type": "string",  "size": 255 },
+      { "key": "overrideNote",        "type": "string",  "size": 255 },
+      { "key": "stockLedgerId",       "type": "string" },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "Dispenses",
+    "attributes": [
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "prescriptionId", "type": "string" },
+      { "key": "appointmentId", "type": "string" },
+      { "key": "invoiceId", "type": "string" },           
+
+      { "key": "status", "type": "enum", "elements": ["draft","posted","canceled"], "default": "draft" },
+      { "key": "dispensedAt", "type": "datetime" },
+      { "key": "dispensedBy", "type": "string" },       
+      { "key": "checkedBy", "type": "string" },
+      
+      { "key": "dispenseNo",   "type": "string",  "required": true },
+      { "key": "voidReason",   "type": "string",  "size": 255 },
+
+      { "key": "counselingProvided", "type": "boolean", "default": false },
+      { "key": "labelNote", "type": "string", "size": 500 },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }, { "key": "updatedBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "PrescriptionItems",
+    "attributes": [
+      { "key": "prescriptionId", "type": "string", "required": true },
+
+      { "key": "productId", "type": "string" },          
+      { "key": "drugName", "type": "string", "required": true },   
+      { "key": "form", "type": "string" }, { "key": "strength", "type": "string" },
+      { "key": "route", "type": "string" },
+
+      { "key": "sig", "type": "string", "size": 1000 },   
+      { "key": "dose", "type": "string" }, { "key": "frequency", "type": "string" },
+      { "key": "durationDays", "type": "integer" },
+
+      { "key": "quantityPrescribed", "type": "integer" },
+      { "key": "quantityUnit", "type": "string" },
+
+      { "key": "substitutionAllowed", "type": "boolean", "default": true },
+      { "key": "prn", "type": "boolean", "default": false },
+
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "Prescriptions",
+    "attributes": [
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "doctorId", "type": "string", "required": true },
+      { "key": "appointmentId", "type": "string" },
+      { "key": "diagnosisId", "type": "string" },
+
+      { "key": "status", "type": "enum",
+        "elements": ["draft","signed","dispensed","canceled","expired"], "default": "draft" },
+
+      { "key": "allowGenericSubstitution", "type": "boolean", "default": true },
+      { "key": "refillsTotal", "type": "integer", "default": 0 },
+      { "key": "refillsRemaining", "type": "integer", "default": 0 },
+
+      { "key": "prescribedAt", "type": "datetime" },
+      { "key": "signedBy", "type": "string" },
+
+      { "key": "notes", "type": "string", "size": 1000 },
+      { "key": "isArchived", "type": "boolean", "default": false },
+      { "key": "createdAt", "type": "datetime" }, { "key": "createdBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }, { "key": "updatedBy", "type": "string" },
+      { "key": "icd10Codes", "type": "string[]" }
+    ]
+  },
+  {
+    "name": "StockLedger",
+    "attributes": [
+      { "key": "productId", "type": "string", "required": true },
+      { "key": "batchId", "type": "string" },
+      { "key": "locationId", "type": "string", "required": true },
+
+      { "key": "direction", "type": "enum", "elements": ["in","out"], "required": true },
+      { "key": "qty", "type": "integer", "required": true },
+      { "key": "unitCost", "type": "float" },
+
+      { "key": "refType", "type": "enum", "elements": ["GRN","ADJ","TRANSFER","DISPENSE","ISSUE","RETURN","CORRECTION"] },
+      { "key": "refId", "type": "string" },
+      { "key": "reason", "type": "string", "size": 300 },
+
+      { "key": "transactedAt", "type": "datetime", "required": true },
+      { "key": "createdBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "StockAdjustmentItems",
+    "attributes": [
+      { "key": "adjustmentId", "type": "string", "required": true },
+      { "key": "productId", "type": "string", "required": true },
+      { "key": "batchId", "type": "string" },
+      { "key": "qtyDelta", "type": "integer", "required": true },   
+      { "key": "unitCost", "type": "float" },
+      { "key": "locationId", "type": "string", "required": true },
+
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "createdBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "StockAdjustments",
+    "attributes": [
+      { "key": "adjustmentNo", "type": "string", "required": true }, 
+      { "key": "reason", "type": "enum", "elements": ["cycle-count","damage","expiry","correction","other"] },
+      { "key": "status", "type": "enum", "elements": ["draft","posted","canceled"], "default": "draft" },
+      { "key": "adjustedAt", "type": "datetime" },
+      { "key": "createdBy", "type": "string" },
+      { "key": "notes", "type": "string", "size": 1000 },
+
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "GoodsReceiptItems",
+    "attributes": [
+      { "key": "grnId", "type": "string", "required": true },
+      { "key": "productId", "type": "string", "required": true },
+      { "key": "batchNo", "type": "string" },
+      { "key": "expiryDate", "type": "datetime" },
+
+      { "key": "qtyReceived", "type": "integer", "required": true },
+      { "key": "unitCost", "type": "float" },
+      { "key": "locationId", "type": "string", "required": true },
+
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "createdBy", "type": "string" }
+    ]
+  },
+  {
+    "name": "GoodsReceipts",
+    "attributes": [
+      { "key": "grnNo", "type": "string", "required": true },    
+      { "key": "supplierId", "type": "string" },
+      { "key": "locationId", "type": "string" },                  
+      { "key": "receivedAt", "type": "datetime" },
+      { "key": "receivedBy", "type": "string" },                  
+      { "key": "invoiceNo", "type": "string" },                   
+      { "key": "status", "type": "enum", "elements": ["draft","posted","canceled"], "default": "draft" },
+      { "key": "attachments", "type": "string[]" },
+      { "key": "notes", "type": "string", "size": 1000 },
+
+      { "key": "createdBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "ProductBatches",
+    "attributes": [
+      { "key": "productId", "type": "string", "required": true },
+      { "key": "batchNo", "type": "string", "required": true },
+      { "key": "expiryDate", "type": "datetime" },
+
+      { "key": "unitCost", "type": "float" },
+      { "key": "locationId", "type": "string", "required": true },
+      { "key": "supplierId", "type": "string" },
+      { "key": "receivedAt", "type": "datetime" },
+
+      { "key": "status", "type": "enum", "elements": ["active","expired","quarantined","recalled"], "default": "active" },
+      { "key": "qtyOnHand", "type": "integer", "default": 0 },
+
+      { "key": "notes", "type": "string", "size": 500 },
+
+      { "key": "createdBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "InventoryLocations",
+    "attributes": [
+      { "key": "code", "type": "string", "required": true },        
+      { "key": "name", "type": "string" },
+      { "key": "type", "type": "enum", "elements": ["PharmacyMain","Dispensary","Quarantine","Waste","Other"], "default": "PharmacyMain" },
+
+      { "key": "isActive", "type": "boolean", "default": true },
+      { "key": "displayOrder", "type": "integer" },
+      { "key": "notes", "type": "string", "size": 500 },
+
+      { "key": "createdBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "Suppliers",
+    "attributes": [
+      { "key": "code", "type": "string", "required": true },      
+      { "key": "name", "type": "string", "required": true },
+      { "key": "contactName", "type": "string" },
+      { "key": "phone", "type": "string" },
+      { "key": "email", "type": "string" },
+      { "key": "address", "type": "string", "size": 500 },
+      { "key": "paymentTerms", "type": "string" },
+
+      { "key": "isActive", "type": "boolean", "default": true },
+      { "key": "notes", "type": "string", "size": 1000 },
+
+      { "key": "createdBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "Admins",
+    "attributes": [
+      { "key": "userId", "type": "string", "required": true },
+      { "key": "fullName", "type": "string", "required": true },
+      { "key": "role", "type": "enum", "elements": ["Admin"], "required": true },
+
+      { "key": "email", "type": "string" },
+      { "key": "phone", "type": "string" },
+      { "key": "photoUrl", "type": "string" },
+      { "key": "title", "type": "string" },
+      { "key": "department", "type": "string" },
+
+      { "key": "adminLevel", "type": "enum", "elements": ["SuperAdmin","Admin","Manager","Viewer"], "default": "Admin" },
+      { "key": "permissions", "type": "string[]" },
+
+      { "key": "require2FA", "type": "boolean", "default": false },
+      { "key": "isActive", "type": "boolean", "default": true },
+
+      { "key": "joinedDate", "type": "datetime" },
+      { "key": "other", "type": "string", "size": 1000 },
+
+      { "key": "createdBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "InventoryStaff",
+    "attributes": [
+      { "key": "userId", "type": "string", "required": true },
+      { "key": "fullName", "type": "string", "required": true },
+      { "key": "role", "type": "enum", "elements": ["InventoryStaff"], "required": true },
+
+      { "key": "email", "type": "string" },
+      { "key": "phone", "type": "string" },
+      { "key": "photoUrl", "type": "string" },
+      { "key": "department", "type": "string" },
+
+      { "key": "shiftType", "type": "enum", "elements": ["Day","Evening","Night","Rotating","Flexible"] },
+      { "key": "isActive", "type": "boolean", "default": true },
+      { "key": "status", "type": "enum", "elements": ["available","offShift","onLeave","suspended"], "default": "available" },
+
+      { "key": "canReceiveStock",  "type": "boolean", "default": true },
+      { "key": "canAdjustStock",   "type": "boolean", "default": true },
+      { "key": "canIssueStock",    "type": "boolean", "default": true },
+      { "key": "canManageCatalog", "type": "boolean", "default": false },
+
+      { "key": "joinedDate", "type": "datetime" },
+      { "key": "other", "type": "string", "size": 1000 },
+
+      { "key": "createdBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "Rooms",
+    "attributes": [
+      { "key": "code", "type": "string", "required": true },         
+      { "key": "name", "type": "string" },                            
+      { "key": "type", "type": "enum", "elements": ["Consultation","Treatment","Procedure","Lab","Other"], "default": "Consultation" },
+      { "key": "isBookable", "type": "boolean", "default": true },    
+      { "key": "status", "type": "enum", "elements": ["available","maintenance"], "default": "available" },
+      { "key": "displayOrder", "type": "integer" },
+      { "key": "notes", "type": "string", "size": 500 },
+
+      { "key": "isActive", "type": "boolean", "default": true },
+      { "key": "createdBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "PharmacyProducts",
+    "attributes": [
+      { "key": "sku", "type": "string", "required": true },
+      { "key": "name", "type": "string", "required": true },
+      { "key": "genericName", "type": "string" },
+
+      { "key": "form", "type": "enum", "elements": ["Tablet","Capsule","Syrup","Suspension","Injection","Ointment","Cream","Gel","Drops","Inhaler","Powder","Patch","Other"] },
+      { "key": "strength", "type": "string" },                         
+      { "key": "route", "type": "enum", "elements": ["oral","topical","ophthalmic","otic","nasal","inhalation","rectal","vaginal","transdermal","im","iv","sc","other"] },
+
+      { "key": "baseUnit", "type": "enum", "elements": ["tablet","capsule","ml","vial","ampoule","tube","patch","bottle","unit","other"] },
+      { "key": "packSize", "type": "integer" },                         
+
+      { "key": "trackByBatch", "type": "boolean", "default": true },
+      { "key": "controlled",   "type": "boolean", "default": false },
+      { "key": "storage", "type": "enum", "elements": ["RoomTemp","Refrigerated","Frozen","LightProtected","Hazard","Other"] },
+
+      { "key": "manufacturer", "type": "string" },
+      { "key": "barcode", "type": "string" },
+
+      { "key": "reorderLevel", "type": "integer" },
+      { "key": "reorderQty",   "type": "integer" },
+
+      { "key": "retailPrice",  "type": "float" },
+      { "key": "taxable",      "type": "boolean", "default": true },
+      { "key": "taxIncluded",  "type": "boolean", "default": false },
+
+      { "key": "defaultSupplierId", "type": "string" },
+
+      { "key": "isActive", "type": "boolean", "default": true },
+      { "key": "notes", "type": "string", "size": 1000 },
+
+      { "key": "createdBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "Patients",
+    "attributes": [
+      { "key": "mrn", "type": "string", "required": true },
+
+      { "key": "fullName", "type": "string", "required": true },
+      { "key": "khmerFullName", "type": "string" },
+      { "key": "gender", "type": "enum", "elements": ["Male","Female","Other","Unknown"], "required": true },
+      { "key": "dob", "type": "datetime" },
+      { "key": "nationality", "type": "string" },
+      { "key": "photoUrl", "type": "string" },
+
+      { "key": "phone", "type": "string" },
+      { "key": "email", "type": "string" },
+      { "key": "address", "type": "string", "size": 500 },
+      { "key": "province", "type": "string" },
+      { "key": "village", "type": "string" },
+
+      { "key": "idType", "type": "enum", "elements": ["NationalID","Passport","BirthCertificate","Other"] },
+      { "key": "idNumber", "type": "string" },
+
+      { "key": "emergencyName", "type": "string" },
+      { "key": "emergencyRelationship", "type": "string" },
+      { "key": "emergencyPhone", "type": "string" },
+
+      { "key": "allergies", "type": "string[]" },
+      { "key": "conditions", "type": "string[]" },
+      { "key": "currentMeds", "type": "string[]" },
+
+      { "key": "preferredLanguage", "type": "string" },
+      { "key": "preferredContact", "type": "enum", "elements": ["phone","sms","telegram","email","none"] },
+
+      { "key": "primaryDoctorId", "type": "string" },
+
+      { "key": "bloodType", "type": "enum", "elements": ["A","B","AB","O","Unknown"] },
+      { "key": "rhesus", "type": "enum", "elements": ["+","-","Unknown"] },
+
+      { "key": "maritalStatus", "type": "enum", "elements": ["Single","Married","Divorced","Widowed","Separated","Other","Unknown"] },
+      { "key": "occupation", "type": "string" },
+
+      { "key": "guardianName", "type": "string" },
+      { "key": "guardianPhone", "type": "string" },
+
+      { "key": "insurerName", "type": "string" },
+      { "key": "memberNo", "type": "string" },
+      { "key": "coverageNote", "type": "string", "size": 1000 },
+
+      { "key": "privacyLevel", "type": "enum", "elements": ["normal","restricted"], "default": "normal" },
+      { "key": "isDeceased", "type": "boolean", "default": false },
+      { "key": "dateOfDeath", "type": "datetime" },
+
+      { "key": "tags", "type": "string[]" },
+      { "key": "medicalHistory", "type": "string", "size": 2000 },
+      { "key": "other", "type": "string", "size": 1000 },
+
+      { "key": "isArchived", "type": "boolean", "default": false },
+      { "key": "createdBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "Appointments",
+    "attributes": [
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "doctorIds", "type": "string[]" },
+      { "key": "nurseIds", "type": "string[]" },
+      { "key": "primaryDoctorId", "type": "string" },
+      { "key": "primaryNurseId", "type": "string" },
+
+      { "key": "startAt", "type": "datetime", "required": true },
+      { "key": "endAt",   "type": "datetime", "required": true },
+
+      { "key": "roomId", "type": "string" },
+
+      { "key": "visitType", "type": "enum", "elements": ["new","follow-up","procedure","lab-only"] },
+      { "key": "source",    "type": "enum", "elements": ["phone","online","walk-in","referral"] },
+      { "key": "priority",  "type": "enum", "elements": ["routine","urgent"], "default": "routine" },
+      { "key": "reason",    "type": "string", "size": 1000 },
+
+      { "key": "status", "type": "enum",
+        "elements": ["scheduled","confirmed","arrived","in-progress","completed","canceled","rescheduled","no-show","left-without-being-seen"],
+        "default": "scheduled"
+      },
+      { "key": "bookedAt",    "type": "datetime" },
+      { "key": "confirmedAt", "type": "datetime" },
+      { "key": "arrivedAt",   "type": "datetime" },
+      { "key": "startedAt",   "type": "datetime" },
+      { "key": "completedAt", "type": "datetime" },
+      { "key": "canceledAt",  "type": "datetime" },
+      { "key": "noShowAt",    "type": "datetime" },
+
+      { "key": "rescheduleFromId", "type": "string" },
+      { "key": "rescheduleReason", "type": "string", "size": 500 },
+      { "key": "canceledBy",       "type": "string" },
+      { "key": "cancelReason",     "type": "string", "size": 500 },
+
+      { "key": "preCheckInCompletedAt", "type": "datetime" },
+      { "key": "triageCompletedAt",     "type": "datetime" },
+      { "key": "readyForDoctorAt",      "type": "datetime" },
+      { "key": "roomedAt",              "type": "datetime" },
+      { "key": "triageBy",              "type": "string" },
+      { "key": "roomedBy",              "type": "string" },
+
+      { "key": "hasInsurancePreauth", "type": "boolean", "default": false },
+      { "key": "consentsVerifiedAt",  "type": "datetime" },
+      { "key": "attachments",         "type": "string[]" },
+
+      { "key": "followUpOfId",        "type": "string" },
+      { "key": "followUpScheduledId", "type": "string" },
+
+      { "key": "tags",         "type": "string[]" },
+      { "key": "internalNote", "type": "string", "size": 1000 },
+
+      { "key": "invoiceId", "type": "string" },
+
+      { "key": "isArchived", "type": "boolean", "default": false },
+      { "key": "createdBy",  "type": "string" },
+      { "key": "createdAt",  "type": "datetime" },
+      { "key": "updatedBy",  "type": "string" },
+      { "key": "updatedAt",  "type": "datetime" }
+    ]
+  },
+  {
+    "name": "AppointmentAuditLogs",
+    "attributes": [
+      { "key": "appointmentId", "type": "string", "required": true },
+      { "key": "action", "type": "enum",
+        "elements": ["create","update","status-change","reschedule","cancel","arrive","start","complete","no-show","assign-room","assign-provider","add-attachment","remove-attachment"],
+        "required": true
+      },
+      { "key": "changedFields", "type": "string[]" },
+      { "key": "oldValuesJson", "type": "string", "size": 4000 },
+      { "key": "newValuesJson", "type": "string", "size": 4000 },
+      { "key": "reason", "type": "string", "size": 500 },
+      { "key": "performedBy", "type": "string" },
+      { "key": "performedByRole", "type": "string" },
+      { "key": "createdAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "Nurses",
+    "attributes": [
+      { "key": "userId", "type": "string", "required": true },
+      { "key": "fullName", "type": "string", "required": true },
+      { "key": "role", "type": "enum", "elements": ["Nurse"], "required": true },
+
+      { "key": "email", "type": "string" },
+      { "key": "phone", "type": "string" },
+      { "key": "photoUrl", "type": "string" },
+      { "key": "department", "type": "string" },
+
+      { "key": "languages", "type": "string[]" },
+      { "key": "competencies", "type": "string[]" },
+      { "key": "certifications", "type": "string[]" },
+
+      { "key": "licenseNumber", "type": "string" },
+      { "key": "licenseIssuer", "type": "string" },
+      { "key": "licenseExpiry", "type": "datetime" },
+
+      { "key": "joinedDate", "type": "datetime" },
+      { "key": "isActive", "type": "boolean", "default": true },
+      { "key": "status", "type": "enum", "elements": ["available","offShift","onLeave","suspended"], "default": "available" },
+      { "key": "shiftType", "type": "enum", "elements": ["Day","Evening","Night","Rotating","Flexible"] },
+
+      { "key": "canTriage", "type": "boolean", "default": true },
+      { "key": "canAdministerMedications", "type": "boolean", "default": true },
+      { "key": "canPhlebotomy", "type": "boolean", "default": false },
+      
+
+      { "key": "eSignMethod", "type": "enum", "elements": ["none","image","certificate"], "default": "none" },
+      { "key": "signatureImageUrl", "type": "string" },
+      { "key": "signaturePublicKey", "type": "string", "size": 2000 },
+
+      { "key": "other", "type": "string", "size": 1000 },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "InvoiceItems",
+    "attributes": [
+      { "key": "invoiceId", "type": "string", "required": true },
+      { "key": "type", "type": "enum", "elements": ["lab", "service", "pharmacy", "manual"], "required": true },
+      { "key": "refId", "type": "string" },
+      { "key": "serviceId", "type": "string" },
+      { "key": "name", "type": "string", "required": true },
+      { "key": "price", "type": "float", "required": true },
+      { "key": "unit", "type": "integer", "required": true },
+      { "key": "discount", "type": "float", "default": 0 },
+      { "key": "discountType", "type": "enum", "elements": ["manual", "staff", "disability", "promotion", "insurance"], "default": "manual" },
+      { "key": "discountNote", "type": "string", "size": 255 },
+      { "key": "subtotal", "type": "float", "required": true },
+      { "key": "displayOrder", "type": "integer" },
+      { "key": "groupLabel", "type": "string", "size": 50 },
+      { "key": "taxable", "type": "boolean", "default": true },
+      { "key": "labResultId", "type": "string" }
+    ]
+  },
+  {
+    "name": "Invoices",
+    "attributes": [
+      { "key": "invoiceNo", "type": "string", "required": true },
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "appointmentId", "type": "string" },
+      { "key": "admissionId", "type": "string" },
+      { "key": "groupInvoiceId", "type": "string" },
+      { "key": "currency", "type": "string" },
+      { "key": "fxRateToBase", "type": "float" },
+      { "key": "amountPaid", "type": "float", "default": 0 },
+      { "key": "amountDue", "type": "float", "default": 0 },
+      { "key": "totalAmount", "type": "float" },
+      { "key": "discount", "type": "float", "default": 0 },
+      { "key": "discountType", "type": "enum", "elements": ["manual", "staff", "disability", "promotion", "insurance"], "default": "manual" },
+      { "key": "discountNote", "type": "string", "size": 255 },
+      { "key": "taxRate", "type": "float", "default": 0 },
+      { "key": "taxAmount", "type": "float", "default": 0 },
+      { "key": "serviceChargeRate", "type": "float", "default": 0 },
+      { "key": "serviceChargeAmount", "type": "float", "default": 0 },
+      { "key": "paymentStatus", "type": "enum", "elements": ["unpaid", "partial", "paid", "refunded"], "required": true },
+      { "key": "docStatus", "type": "enum", "elements": ["draft", "final", "void"], "required": true },
+      { "key": "voidReason", "type": "string", "size": 255 },
+      { "key": "refundedAmount", "type": "float", "default": 0 },
+      { "key": "paymentMethod", "type": "enum", "elements": ["cash", "card", "mobile", "insurance"] },
+      { "key": "paidAt", "type": "datetime" },
+      { "key": "paidBy", "type": "string" },
+      { "key": "printedBy", "type": "string" },
+      { "key": "printedAt", "type": "datetime" },
+      { "key": "source", "type": "enum", "elements": ["appointment", "admission", "manual"] },
+      { "key": "note", "type": "string", "size": 1000 },
+      { "key": "patientSnapshotName", "type": "string" },
+      { "key": "patientSnapshotPhone", "type": "string" },
+      { "key": "patientSnapshotDob", "type": "datetime" },
+      { "key": "patientSnapshotMrn", "type": "string" },
+      { "key": "finalizedAt", "type": "datetime" },
+      { "key": "finalizedBy", "type": "string" },
+      { "key": "isArchived", "type": "boolean", "default": false },
+      { "key": "archivedAt", "type": "datetime" },
+      { "key": "archivedBy", "type": "string" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "Receptionists",
+    "attributes": [
+      { "key": "userId", "type": "string", "required": true },
+      { "key": "fullName", "type": "string", "required": true },
+      { "key": "role", "type": "enum", "elements": ["Receptionist"], "required": true },
+
+      { "key": "email", "type": "string" },
+      { "key": "phone", "type": "string" },
+      { "key": "photoUrl", "type": "string" },
+      { "key": "department", "type": "string" },
+
+      { "key": "shiftType", "type": "enum", "elements": ["Day","Evening","Night","Rotating","Flexible"] },
+      { "key": "status", "type": "enum", "elements": ["available","offShift","onLeave","suspended"], "default": "available" },
+      { "key": "isActive", "type": "boolean", "default": true },
+
+      { "key": "permissions", "type": "string[]" },
+      { "key": "cashierCode", "type": "string" },
+      { "key": "tillId", "type": "string" },
+
+      { "key": "joinedDate", "type": "datetime" },
+      { "key": "other", "type": "string", "size": 1000 },
+
+      { "key": "createdBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "Doctors",
+    "attributes": [
+      { "key": "userId", "type": "string", "required": true },
+      { "key": "fullName", "type": "string", "required": true },
+      { "key": "role", "type": "enum", "elements": ["Doctor"], "required": true },
+
+      { "key": "email", "type": "string" },
+      { "key": "phone", "type": "string" },
+      { "key": "photoUrl", "type": "string" },
+      { "key": "department", "type": "string" },
+
+      { "key": "specialties", "type": "string[]" },
+      { "key": "subSpecialties", "type": "string[]" },
+      { "key": "languages", "type": "string[]" },
+
+      { "key": "licenseNumber", "type": "string" },
+      { "key": "licenseIssuer", "type": "string" },
+      { "key": "licenseExpiry", "type": "datetime" },
+
+      { "key": "joinedDate", "type": "datetime" },
+      { "key": "isActive", "type": "boolean", "default": true },
+      { "key": "status", "type": "enum", "elements": ["available","offShift","onLeave","suspended"], "default": "available" },
+
+      
+      
+      
+      
+
+      
+      
+
+      { "key": "eSignMethod", "type": "enum", "elements": ["none","image","certificate"], "default": "none" },
+      { "key": "signatureImageUrl", "type": "string" },
+      { "key": "signaturePublicKey", "type": "string", "size": 2000 },
+
+      { "key": "other", "type": "string", "size": 1000 },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "Pharmacists",
+    "attributes": [
+      { "key": "userId", "type": "string", "required": true },
+      { "key": "fullName", "type": "string", "required": true },
+      { "key": "role", "type": "enum", "elements": ["Pharmacist"], "required": true },
+
+      { "key": "email", "type": "string" },
+      { "key": "phone", "type": "string" },
+      { "key": "photoUrl", "type": "string" },
+      { "key": "department", "type": "string" },
+
+      { "key": "languages", "type": "string[]" },
+      { "key": "competencies", "type": "string[]" },    
+      { "key": "certifications", "type": "string[]" },
+
+      { "key": "licenseNumber", "type": "string" },
+      { "key": "licenseIssuer", "type": "string" },
+      { "key": "licenseExpiry", "type": "datetime" },
+
+      { "key": "shiftType", "type": "enum", "elements": ["Day","Evening","Night","Rotating","Flexible"] },
+      { "key": "status", "type": "enum", "elements": ["available","offShift","onLeave","suspended"], "default": "available" },
+      { "key": "isActive", "type": "boolean", "default": true },
+
+      { "key": "canDispense",    "type": "boolean", "default": true },
+      { "key": "canCompound",    "type": "boolean", "default": false },
+      { "key": "canSubstitute",  "type": "boolean", "default": true }, 
+
+      { "key": "eSignMethod", "type": "enum", "elements": ["none","image","certificate"], "default": "none" },
+      { "key": "signatureImageUrl", "type": "string" },
+      { "key": "signaturePublicKey", "type": "string", "size": 2000 },
+
+      { "key": "joinedDate", "type": "datetime" },
+      { "key": "other", "type": "string", "size": 1000 },
+
+      { "key": "createdBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "LabTechnicians",
+    "attributes": [
+      { "key": "userId", "type": "string", "required": true },
+      { "key": "fullName", "type": "string", "required": true },
+      { "key": "email", "type": "string" },
+      { "key": "phone", "type": "string" },
+      { "key": "photoUrl", "type": "string" },
+      { "key": "department", "type": "string" },
+      { "key": "joinedDate", "type": "datetime" },
+      { "key": "isActive", "type": "boolean", "default": true },
+      { "key": "role", "type": "enum", "elements": ["LabTechnician"], "required": true }
+    ]
+  },
+  {
+    "name": "LabTestCatalog",
+    "attributes": [
+      { "key": "name", "type": "string", "required": true },
+      { "key": "category", "type": "string" },
+      { "key": "price", "type": "float", "required": true },
+      { "key": "availableInHouse", "type": "boolean", "default": false },
+      { "key": "isPanel",             "type": "boolean", "default": false },
+      { "key": "panelItemIds",        "type": "string[]" }, 
+      { "key": "defaultSpecimenType", "type": "enum", "elements": ["blood","serum","plasma","urine","stool","swab","csf","sputum","other"] },
+      { "key": "method",              "type": "string" },
+      { "key": "unit",                "type": "string" },
+      { "key": "tatMinutes",          "type": "integer" },
+      { "key": "createdBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "LabResults",
+    "attributes": [
+      { "key": "patientId", "type": "string", "required": true },
+      { "key": "requestedBy", "type": "string" },
+      { "key": "diagnosisId", "type": "string" },
+
+      { "key": "orderId",     "type": "string" },
+      { "key": "specimenId",  "type": "string" },
+
+      { "key": "method",      "type": "string" },
+      { "key": "analyzerId",  "type": "string" },
+
+      { "key": "verifiedBy",  "type": "string" },
+      { "key": "verifiedAt",  "type": "datetime" },
+      { "key": "releasedAt",  "type": "datetime" },
+      { "key": "resultedAt", "type": "datetime" },
+
+      { "key": "testName", "type": "string" },
+      { "key": "results", "type": "string" },
+      { "key": "status", "type": "enum", "elements": ["pending", "processing", "completed", "canceled"], "required": true },
+      { "key": "labSource", "type": "enum", "elements": ["in-house", "external"] },
+      { "key": "externalLabName", "type": "string" },
+      { "key": "processedBy", "type": "string" },
+      { "key": "resultFileUrl", "type": "string" },
+      { "key": "printedAt", "type": "datetime" },
+      { "key": "isPrinted", "type": "boolean", "default": false },
+      { "key": "labConsentId", "type": "string" },
+      { "key": "isArchived", "type": "boolean", "default": false },
+      { "key": "createdBy", "type": "string" },
+      { "key": "updatedBy", "type": "string" },
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  },
+  {
+    "name": "LabResultDetails",
+    "attributes": [
+      { "key": "labResultId", "type": "string", "required": true },
+      { "key": "testItem", "type": "string", "required": true },
+      { "key": "value", "type": "string" },
+      { "key": "unit", "type": "string" },
+      { "key": "numericValue",         "type": "float" },
+      { "key": "referenceRangeLow",    "type": "float" },
+      { "key": "referenceRangeHigh",   "type": "float" },
+      { "key": "referenceRange", "type": "string" },
+      { "key": "flag", "type": "enum", "elements": ["normal", "high", "low", "critical"] },
+      { "key": "note", "type": "string" }
+    ]
+  },
+  {
+    "name": "LabReports",
+    "attributes": [
+      { "key": "month", "type": "string", "required": true },
+      { "key": "totalTests", "type": "integer" },
+      { "key": "inHouseCount", "type": "integer" },
+      { "key": "externalCount", "type": "integer" },
+      { "key": "averageCompletionTime", "type": "float" }
+    ]
+  },
+  {
+    "name": "InvoicePayments",
+    "attributes": [
+      { "key": "invoiceId", "type": "string", "required": true },
+      { "key": "cashSessionId", "type": "string" },
+      { "key": "type", "type": "enum", "elements": ["payment", "refund"], "required": true },
+      { "key": "amount", "type": "float", "required": true },
+      { "key": "currency", "type": "string" },
+      { "key": "fxRateToBase", "type": "float" },
+      { "key": "method", "type": "enum", "elements": ["cash", "card", "mobile", "insurance", "bank"], "required": true },
+      { "key": "paidByUserId", "type": "string" },
+      { "key": "receivedFrom", "type": "string" },
+      { "key": "paidAt", "type": "datetime", "required": true },
+      { "key": "note", "type": "string", "size": 1000 },
+      { "key": "attachmentFileId", "type": "string" }
+    ]
+  },
+  {
+    "name": "InvoiceAuditLogs",
+    "attributes": [
+      { "key": "invoiceId", "type": "string", "required": true },
+      { "key": "action", "type": "enum", "elements": ["create", "update", "delete", "void", "print", "add-item", "remove-item", "change-discount", "add-payment", "refund"], "required": true },
+      { "key": "changedFields", "type": "string[]" },
+      { "key": "performedBy", "type": "string", "required": true },
+      { "key": "timestamp", "type": "datetime", "required": true },
+      { "key": "note", "type": "string" }
+    ]
+  },
+  {
+    "name": "InvoiceAttachments",
+    "attributes": [
+      { "key": "invoiceId", "type": "string", "required": true },
+      { "key": "fileId", "type": "string", "required": true },
+      { "key": "fileType", "type": "enum", "elements": ["payment-proof", "external-receipt", "other"], "required": true },
+      { "key": "uploadedBy", "type": "string", "required": true },
+      { "key": "uploadedAt", "type": "datetime", "required": true },
+      { "key": "note", "type": "string", "size": 1000 }
+    ]
+  },
+  {
+    "name": "Sequences",
+    "attributes": [
+      { "key": "key", "type": "string", "required": true },
+      { "key": "current", "type": "integer", "required": true }
+    ]
+  },
+  {
+    "name": "PrintTemplates",
+    "attributes": [
+      { "key": "name", "type": "string", "required": true },
+      { "key": "type", "type": "enum", "elements": ["invoice","lab-report","lab-specimen-label","clinical-note","imaging-report"], "required": true },
+      { "key": "content", "type": "string", "required": true },
+      { "key": "createdBy", "type": "string", "required": true },
+      { "key": "createdAt", "type": "datetime", "required": true }
+    ]
+  },
+  {
+    "name": "Settings",
+    "attributes": [
+      { "key": "baseCurrency", "type": "string", "required": true },
+      { "key": "allowedCurrencies", "type": "string[]" },
+      { "key": "fxCapture", "type": "enum", "elements": ["invoice", "payment", "both"], "required": true },
+      { "key": "showConvertedTotals", "type": "boolean", "default": true },
+
+      { "key": "taxRate", "type": "float", "default": 0 },
+      { "key": "serviceChargeRate", "type": "float", "default": 0 },
+      { "key": "defaultItemTaxable", "type": "boolean", "default": true },
+      { "key": "nonTaxableTypes", "type": "string[]" },
+      { "key": "calcOrder", "type": "enum", "elements": ["A", "B"], "required": true },
+
+      { "key": "numberFormat", "type": "string", "required": true },
+      { "key": "sequenceScope", "type": "enum", "elements": ["global", "monthly", "yearly"], "required": true },
+      { "key": "zeroPad", "type": "integer", "default": 4 },
+      { "key": "assignInvoiceNoOn", "type": "enum", "elements": ["draft", "finalize"], "required": true },
+      { "key": "collisionPolicy", "type": "enum", "elements": ["retry", "fail"], "required": true },
+
+      { "key": "canFinalizeRoles", "type": "string[]" },
+      { "key": "canVoidRoles", "type": "string[]" },
+      { "key": "canArchiveRoles", "type": "string[]" },
+      { "key": "hideVoidByDefault", "type": "boolean", "default": true },
+      { "key": "hideArchivedByDefault", "type": "boolean", "default": true },
+
+      { "key": "paymentMethods", "type": "string[]" },
+      { "key": "allowPartialPayments", "type": "boolean", "default": true },
+      { "key": "requirePaidAtAndCashier", "type": "boolean", "default": true },
+      { "key": "refundStatusPolicy", "type": "enum", "elements": ["anyRefund", "netNegative", "none"], "required": true },
+
+      { "key": "roundingUSDDecimals", "type": "integer", "default": 2 },
+      { "key": "roundingKHRMode", "type": "enum", "elements": ["nearest_100", "nearest_1", "nearest_10", "nearest_50"], "required": true },
+      { "key": "roundingMode", "type": "enum", "elements": ["half-up", "half-even", "floor"], "required": true },
+
+      { "key": "printTemplateName", "type": "string" },
+      { "key": "printFooterText", "type": "string", "size": 1000 },
+      { "key": "showDraftWatermark", "type": "boolean", "default": true },
+      { "key": "labSectionLabel", "type": "string", "default": "LAB" },
+
+      { "key": "snapshotFields", "type": "string[]" },
+      { "key": "displayTimezone", "type": "string", "default": "Asia/Phnom_Penh" },
+
+      { "key": "mrnPrefix",       "type": "string",  "default": "PT" },
+      { "key": "mrnIncludeYear",  "type": "boolean", "default": true },
+      { "key": "mrnPad",          "type": "integer", "default": 6 },
+      { "key": "mrnResetScope",   "type": "enum",    "elements": ["year","never"], "default": "year" },
+      { "key": "mrnCheckDigit",   "type": "boolean", "default": false },
+      { "key": "mrnPreview",      "type": "string",  "size": 20 },
+
+      { "key": "schedDefaultSlotMinutes", "type": "integer", "default": 15 },
+      { "key": "schedAllowOverlaps", "type": "boolean", "default": false },
+      { "key": "schedWorkingDays", "type": "string[]" },
+      { "key": "schedDayStart", "type": "string", "default": "08:00" },
+      { "key": "schedDayEnd", "type": "string", "default": "17:00" },
+      { "key": "schedLeadTimeMinutes", "type": "integer", "default": 60 },
+      { "key": "schedCancelCutoffMinutes", "type": "integer", "default": 120 },
+
+      { "key": "marAllowAdminWithoutPrescription", "type": "boolean", "default": true },
+      { "key": "taskRequireAssignee", "type": "boolean", "default": false },
+
+      { "key": "dispensePrefix",      "type": "string",  "default": "DSP" },
+      { "key": "dispensePad",         "type": "integer", "default": 6 },
+      { "key": "dispenseResetScope",  "type": "enum",    "elements": ["month","year","never"], "default": "month" },
+
+      { "key": "labOrderPrefix",      "type": "string",  "default": "LABO" },
+      { "key": "labOrderPad",         "type": "integer", "default": 6 },
+      { "key": "labOrderResetScope",  "type": "enum",    "elements": ["month","year","never"], "default": "month" },
+
+      { "key": "accessionPrefix",     "type": "string",  "default": "ACC" },
+      { "key": "accessionPad",        "type": "integer", "default": 6 },
+      { "key": "accessionResetScope", "type": "enum",    "elements": ["month","year","never"], "default": "month" },
+
+      { "key": "imagingOrderPrefix",      "type": "string",  "default": "IMGO" },
+      { "key": "imagingOrderPad",         "type": "integer", "default": 6 },
+      { "key": "imagingOrderResetScope",  "type": "enum",    "elements": ["month","year","never"], "default": "month" },
+
+      { "key": "createdAt", "type": "datetime" },
+      { "key": "updatedAt", "type": "datetime" }
+    ]
+  }
+]
