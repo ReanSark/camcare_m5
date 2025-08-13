@@ -1070,14 +1070,6 @@
       { "key": "isActive", "type": "boolean", "default": true },
       { "key": "status", "type": "enum", "elements": ["available","offShift","onLeave","suspended"], "default": "available" },
 
-      
-      
-      
-      
-
-      
-      
-
       { "key": "eSignMethod", "type": "enum", "elements": ["none","image","certificate"], "default": "none" },
       { "key": "signatureImageUrl", "type": "string" },
       { "key": "signaturePublicKey", "type": "string", "size": 2000 },
