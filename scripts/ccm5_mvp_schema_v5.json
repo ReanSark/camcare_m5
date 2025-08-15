@@ -1282,9 +1282,9 @@
       { "key": "nonTaxableTypes", "type": "string[]" },
       { "key": "calcOrder", "type": "enum", "elements": ["A", "B"], "required": true },
 
-      { "key": "numberFormat", "type": "string", "required": true },
-      { "key": "sequenceScope", "type": "enum", "elements": ["global", "monthly", "yearly"], "required": true },
-      { "key": "zeroPad", "type": "integer", "default": 4 },
+      { "key": "invoicePrefix", "type": "string", "default": "INV" },
+      { "key": "invoiceResetScope", "type": "enum", "elements": ["global", "monthly", "yearly"], "default": "month" },
+      { "key": "invoicePad", "type": "integer", "default": 6 },
       { "key": "assignInvoiceNoOn", "type": "enum", "elements": ["draft", "finalize"], "required": true },
       { "key": "collisionPolicy", "type": "enum", "elements": ["retry", "fail"], "required": true },
 
