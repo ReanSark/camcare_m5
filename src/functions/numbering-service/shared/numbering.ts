@@ -94,7 +94,7 @@ export async function nextNumber(
     );
   }
 
-  // read-or-create
+  // read-or-create (race-safe)
   let current = 0;
   try {
     const doc = (await databases.getDocument(
@@ -104,8 +104,18 @@ export async function nextNumber(
     )) as unknown as SequenceDoc;
     current = typeof doc.current === "number" ? doc.current : 0;
   } catch {
-    await databases.createDocument(DB_ID, COL.Sequences, docId, { key, current: 0 });
-    current = 0;
+    // Create if missing; if another request created it first, re-read.
+    try {
+      await databases.createDocument(DB_ID, COL.Sequences, docId, { key, current: 0 });
+      current = 0;
+    } catch {
+      const doc2 = (await databases.getDocument(
+        DB_ID,
+        COL.Sequences,
+        docId
+      )) as unknown as SequenceDoc;
+      current = typeof doc2.current === "number" ? doc2.current : 0;
+    }
   }
 
   // short retry loop
