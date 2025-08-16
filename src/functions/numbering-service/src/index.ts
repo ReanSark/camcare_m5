@@ -3,28 +3,34 @@ import { nextNumber, type Stream } from "../shared/numbering";
 import type { Settings } from "../shared/types";
 import { Query } from "node-appwrite";
 
-// Minimal types to satisfy lint/TS without external deps
-interface HeadersLike {
-  get(name: string): string | null;
-}
-interface RequestLike {
-  json(): Promise<unknown>;
-  headers: HeadersLike;
-}
-interface ResponseLike {
-  json(body: unknown, status?: number): void;
-}
+/** ---- Open Runtimes request/response typing + helpers ---- */
 interface FnContext {
-  req: RequestLike;
-  res: ResponseLike;
+  req: {
+    body?: unknown;
+    headers?: Record<string, string | string[]>;
+  };
+  res: {
+    json(body: unknown, status?: number): void;
+  };
+}
+
+function readJson<T = unknown>(ctx: FnContext): T {
+  const b = ctx.req?.body;
+  if (!b) return {} as T;
+  if (typeof b === "string") {
+    try { return JSON.parse(b) as T; } catch { return {} as T; }
+  }
+  if (typeof Buffer !== "undefined" && Buffer.isBuffer(b)) {
+    try { return JSON.parse(b.toString("utf8")) as T; } catch { return {} as T; }
+  }
+  if (typeof b === "object") return b as T;
+  return {} as T;
 }
 
 export default async function main(ctx: FnContext) {
   const { databases } = getServerClient();
 
-  const raw = await ctx.req.json();
-  const { stream, dateISO } = (raw ?? {}) as { stream?: string; dateISO?: string };
-
+  const { stream, dateISO } = readJson<{ stream?: string; dateISO?: string }>(ctx);
   if (!stream) {
     return ctx.res.json({ error: "stream required" }, 400);
   }
