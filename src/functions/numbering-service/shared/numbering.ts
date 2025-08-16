@@ -69,9 +69,12 @@ function buildKey(stream: Stream, dt: Date, settings: Settings) {
   const parts = [prefix];
   if (scope === "monthly") parts.push(`${yyyy}${mm}`);
   if (scope === "yearly") parts.push(`${yyyy}`);
-  const key = parts.join(":");
+  const key = parts.join("-"); // ← use hyphen for the sequence key
   return { key, padLen, prefix };
 }
+
+// Appwrite docId rules: <=36 chars, allowed [A-Za-z0-9._-], must start alphanumeric.
+const isValidDocId = (s: string) => /^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/.test(s);
 
 export async function nextNumber(
   databases: Databases,
@@ -82,39 +85,43 @@ export async function nextNumber(
   const now = whenISO ? new Date(whenISO) : new Date();
   const { key, padLen, prefix } = buildKey(stream, now, settings);
 
-  // Use a sanitized ID based on the scope key
-  const seqId = key.replace(/[^A-Za-z0-9:_-]/g, "_");
+  // Document ID == key (your requirement)
+  const docId = key;
 
-  // Attempt "read-or-create" then increment
+  if (!isValidDocId(docId)) {
+    throw new Error(
+      `Invalid sequence key '${key}' for Appwrite documentId. Keep it <=36 chars, start with a letter/number, and use only letters, numbers, '.', '_' or '-'. Consider shortening the prefix.`
+    );
+  }
+
+  // read-or-create
   let current = 0;
   try {
     const doc = (await databases.getDocument(
       DB_ID,
       COL.Sequences,
-      seqId
+      docId
     )) as unknown as SequenceDoc;
     current = typeof doc.current === "number" ? doc.current : 0;
   } catch {
-    // create with current = 0 if missing
-    await databases.createDocument(DB_ID, COL.Sequences, seqId, { key, current: 0 });
+    await databases.createDocument(DB_ID, COL.Sequences, docId, { key, current: 0 });
     current = 0;
   }
 
-  // Short retry loop to reduce race conditions
+  // short retry loop
   const attempts = settings.collisionPolicy === "fail" ? 1 : 5;
   for (let i = 0; i < attempts; i++) {
     try {
       const newCur = current + 1;
-      await databases.updateDocument(DB_ID, COL.Sequences, seqId, { current: newCur });
-      const human = `${prefix}-${pad(newCur, padLen)}`;
+      await databases.updateDocument(DB_ID, COL.Sequences, docId, { current: newCur });
+      const human = `${prefix}-${pad(newCur, padLen)}`; // e.g. INV-000123
       return { number: human, key, current: newCur };
     } catch {
-      // small backoff and re-read current
       await new Promise<void>((resolve) => setTimeout(resolve, 25 * (i + 1)));
       const doc = (await databases.getDocument(
         DB_ID,
         COL.Sequences,
-        seqId
+        docId
       )) as unknown as SequenceDoc;
       current = typeof doc.current === "number" ? doc.current : 0;
     }

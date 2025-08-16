@@ -1283,7 +1283,7 @@
       { "key": "calcOrder", "type": "enum", "elements": ["A", "B"], "required": true },
 
       { "key": "invoicePrefix", "type": "string", "default": "INV" },
-      { "key": "invoiceResetScope", "type": "enum", "elements": ["global", "monthly", "yearly"], "default": "month" },
+      { "key": "invoiceResetScope", "type": "enum", "elements": ["global", "monthly", "yearly"], "default": "monthly" },
       { "key": "invoicePad", "type": "integer", "default": 6 },
       { "key": "assignInvoiceNoOn", "type": "enum", "elements": ["draft", "finalize"], "required": true },
       { "key": "collisionPolicy", "type": "enum", "elements": ["retry", "fail"], "required": true },
